@@ -18,6 +18,11 @@ export function useDashboardData() {
   const [filters, setFilters] = useState<FilterOptions>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const calculateStats = useCallback((transactions: RampTransaction[]): DashboardStats => {
     const stats = transactions.reduce(
@@ -52,6 +57,8 @@ export function useDashboardData() {
   }, []);
 
   const fetchTransactions = useCallback(async (currentFilters: FilterOptions = {}) => {
+    if (!mounted) return;
+    
     setLoading(true);
     setError(null);
 
@@ -66,18 +73,24 @@ export function useDashboardData() {
     } finally {
       setLoading(false);
     }
-  }, [calculateStats]);
+  }, [calculateStats, mounted]);
 
   const refreshData = useCallback(() => {
-    fetchTransactions(filters);
-  }, [fetchTransactions, filters]);
+    if (mounted) {
+      fetchTransactions(filters);
+    }
+  }, [fetchTransactions, filters, mounted]);
 
   const updateFilters = useCallback((newFilters: FilterOptions) => {
-    setFilters(newFilters);
-    fetchTransactions(newFilters);
-  }, [fetchTransactions]);
+    if (mounted) {
+      setFilters(newFilters);
+      fetchTransactions(newFilters);
+    }
+  }, [fetchTransactions, mounted]);
 
   const exportData = useCallback(async (format: 'csv' | 'excel') => {
+    if (!mounted) return;
+    
     try {
       setLoading(true);
       const blob = await rampApi.exportTransactions(filters, format);
@@ -90,12 +103,14 @@ export function useDashboardData() {
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters, mounted]);
 
-  // Initial data fetch
+  // Initial data fetch - only after component is mounted
   useEffect(() => {
-    fetchTransactions();
-  }, [fetchTransactions]);
+    if (mounted) {
+      fetchTransactions();
+    }
+  }, [mounted, fetchTransactions]);
 
   return {
     transactions,
