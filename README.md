@@ -15,14 +15,14 @@ A lightweight, enterprise-ready web application dashboard with direct Ramp API i
 - 📱 **Responsive Design**: Works seamlessly on desktop and mobile devices
 - ⚡ **Serverless Functions**: Secure Ramp API integration via Vercel functions
 - 🎨 **Modern UI**: Clean, professional interface with TailwindCSS
-- 🧪 **Demo Mode**: Works with mock data when no API key is provided
+- 🧪 **Demo Mode**: Works with mock data when no API credentials are provided
 
 ## 🛠 Tech Stack
 
 - **Frontend**: Next.js 15, React 19, TypeScript
 - **Styling**: TailwindCSS
 - **Data Table**: AG Grid Community (properly configured)
-- **API Integration**: Ramp API via serverless functions
+- **API Integration**: Ramp API via OAuth 2.0 Client Credentials
 - **Authentication**: Custom auth system (SSO-ready)
 - **Deployment**: Vercel
 - **Export**: XLSX for Excel, CSV for spreadsheets
@@ -34,29 +34,42 @@ A lightweight, enterprise-ready web application dashboard with direct Ramp API i
 1. Click the "Deploy with Vercel" button above
 2. Connect your GitHub account
 3. **When prompted for environment variables, add these**:
-   - `RAMP_API_KEY`: Type `DEMO` (for demo mode with mock data)
+   - `RAMP_CLIENT_ID`: Leave empty or type `demo`
+   - `RAMP_CLIENT_SECRET`: Leave empty or type `demo`
+   - `RAMP_ENVIRONMENT`: `sandbox`
    - `NEXTAUTH_SECRET`: Type any random text like `my-demo-secret-123`
 4. Deploy!
 5. Login with `demo@company.com` / `demo123`
 
 ### Option 2: Production Mode (Real Ramp Data)
 
-1. Get your API key from [Ramp Developer Portal](https://developer.ramp.com)
-2. Click the "Deploy with Vercel" button above
-3. **When prompted for environment variables, add these**:
-   - `RAMP_API_KEY`: Your actual Ramp API key (starts with `ramp_live_` or `ramp_sandbox_`)
-   - `NEXTAUTH_SECRET`: A secure random string (32+ characters)
-4. Deploy!
+1. **Set up your Ramp Developer App**:
+   - Go to your Ramp account → Developer API
+   - Create a new app or use existing one
+   - Enable "Client Credentials" grant type
+   - Add scopes: `transactions:read`, `users:read`, `cards:read`, `business:read`
+   - Copy your Client ID and Client Secret
+
+2. **Deploy to Vercel**:
+   - Click the "Deploy with Vercel" button above
+   - **Set environment variables**:
+     - `RAMP_CLIENT_ID`: Your actual Ramp Client ID (starts with `ramp_id_`)
+     - `RAMP_CLIENT_SECRET`: Your actual Ramp Client Secret (starts with `ramp_sec_`)
+     - `RAMP_ENVIRONMENT`: `production`
+     - `NEXTAUTH_SECRET`: A secure random string (32+ characters)
+   - Deploy!
 
 ## 🔧 Environment Variables
 
 | Variable | Demo Mode | Production Mode | Required |
 |----------|-----------|-----------------|----------|
-| `RAMP_API_KEY` | `DEMO` or `demo` | Your actual Ramp API key | Yes |
+| `RAMP_CLIENT_ID` | Leave empty or `demo` | Your actual Ramp Client ID | No* |
+| `RAMP_CLIENT_SECRET` | Leave empty or `demo` | Your actual Ramp Client Secret | No* |
+| `RAMP_ENVIRONMENT` | `sandbox` | `production` | No |
 | `NEXTAUTH_SECRET` | Any random text | Secure random string | Yes |
 | `NEXTAUTH_URL` | Auto-detected | Your domain URL | No |
 
-*App automatically uses mock data when API key is `DEMO`, `demo`, `test`, or similar values.
+*App automatically uses mock data when no valid credentials are provided.
 
 ## 🎯 Getting Started
 
@@ -70,7 +83,7 @@ A lightweight, enterprise-ready web application dashboard with direct Ramp API i
 2. **Set up environment variables**:
    ```bash
    cp .env.example .env.local
-   # Edit .env.local - set RAMP_API_KEY to DEMO for demo mode
+   # Edit .env.local with your Ramp credentials
    ```
 
 3. **Start development server**:
@@ -88,6 +101,46 @@ A lightweight, enterprise-ready web application dashboard with direct Ramp API i
 npm run build
 npm start
 ```
+
+## 🔐 Ramp API Setup
+
+### Required Permissions
+- Your Ramp account must have **ADMIN** or **IT_ADMIN** role
+- Regular users cannot create apps or generate tokens
+
+### Setting Up Your Developer App
+
+1. **Access Developer Console**:
+   - Press CMD + K in Ramp and select "Developer API"
+   - Or go to Settings → Developer API
+
+2. **Create New App**:
+   - Click "Create New App"
+   - Name your app (e.g., "Expense Dashboard")
+   - Accept terms and click "Create"
+
+3. **Configure Grant Types**:
+   - Under "Grant types", click "Add new grant type"
+   - Select "Client Credentials"
+
+4. **Configure Scopes**:
+   - Click "Configure allowed scopes"
+   - Select these scopes:
+     - `transactions:read` - View transaction data
+     - `users:read` - View employee data
+     - `cards:read` - View card information
+     - `business:read` - View company information
+
+5. **Get Credentials**:
+   - Copy your **Client ID** (starts with `ramp_id_`)
+   - Copy your **Client Secret** (starts with `ramp_sec_`)
+
+### Authentication Flow
+
+The dashboard uses OAuth 2.0 Client Credentials flow:
+1. **Token Request**: Exchanges Client ID/Secret for access token
+2. **API Calls**: Uses Bearer token for all API requests
+3. **Token Refresh**: Automatically refreshes tokens (~10 day expiry)
 
 ## 📋 API Endpoints
 
@@ -128,7 +181,7 @@ src/
 │   └── ui/               # Reusable UI components
 ├── hooks/                # Custom React hooks
 ├── lib/                  # Utility functions and API clients
-│   └── ag-grid-setup.ts  # AG Grid module registration
+│   └── ramp-server.ts    # OAuth-enabled Ramp API client
 └── types/                # TypeScript type definitions
 ```
 
@@ -141,7 +194,7 @@ src/
 
 ### API Integration
 - **rampApi**: Client-side API wrapper
-- **rampServerClient**: Server-side Ramp API client with automatic mock data fallback
+- **rampServerClient**: Server-side OAuth-enabled Ramp API client
 - **useDashboardData**: Custom hook for data management
 
 ## 🔧 Customization
@@ -163,6 +216,7 @@ src/
 
 ## 🚀 Performance Features
 
+- **OAuth Token Caching**: Tokens cached and auto-refreshed
 - **Pagination**: AG Grid handles large datasets efficiently
 - **Server-side Filtering**: Reduces data transfer
 - **Proper Module Registration**: AG Grid setup prevents runtime errors
@@ -172,7 +226,9 @@ src/
 
 ## 🔒 Security
 
-- API key stored securely in environment variables
+- OAuth 2.0 Client Credentials flow
+- Client credentials stored securely in environment variables
+- Access tokens cached server-side only
 - Client-side API calls go through serverless functions
 - Input validation on all API endpoints
 - Authentication tokens with proper session management
@@ -183,25 +239,25 @@ src/
 ### Common Issues
 
 **Demo Mode Not Working**:
-- ✅ Set `RAMP_API_KEY` to `DEMO` in Vercel environment variables
+- ✅ Leave `RAMP_CLIENT_ID` and `RAMP_CLIENT_SECRET` empty in Vercel
 - ✅ Check browser console for "Using mock data" messages
 - ✅ Ensure you're using `demo@company.com` / `demo123` to login
 
-**Build Failures**:
-- ✅ Turbopack disabled for stability
-- ✅ AG Grid modules properly registered
-- Check environment variables are set correctly
-- Review build logs in Vercel dashboard
+**Authentication Errors**:
+- ✅ Verify your Ramp app has "Client Credentials" grant type enabled
+- ✅ Check that required scopes are configured in your Ramp app
+- ✅ Ensure you have ADMIN or IT_ADMIN role in Ramp
+- ✅ Verify Client ID starts with `ramp_id_` and Secret starts with `ramp_sec_`
 
 **API Errors**:
-- Verify Ramp API key is valid and has proper permissions
-- Check API rate limits
-- Review serverless function logs in Vercel
+- ✅ Check Vercel function logs for detailed error messages
+- ✅ Verify your Ramp account has access to the data you're requesting
+- ✅ Ensure your app's scopes match the data you're trying to access
 
-**Authentication Issues**:
-- Verify `NEXTAUTH_SECRET` is set
-- Check `NEXTAUTH_URL` matches deployment URL
-- Clear browser cache and cookies
+**Build Failures**:
+- ✅ Check environment variables are set correctly in Vercel
+- ✅ Review build logs in Vercel dashboard
+- ✅ Ensure all required environment variables are present
 
 ## 📊 Monitoring
 
@@ -229,11 +285,12 @@ For issues and questions:
 1. Check the [Issues](https://github.com/BambamBandit11/ramp-dashboard/issues) page
 2. Create a new issue with detailed description
 3. Include environment details and error messages
+4. For Ramp API issues, contact `developer-support@ramp.com`
 
 ---
 
 **Built with ❤️ for modern expense management**
 
-**Status**: ✅ Production Ready | 🔧 AG Grid Fixed | 🚀 Vercel Deployable | 📊 Full Featured | 🧪 Demo Mode Ready
+**Status**: ✅ Production Ready | 🔧 OAuth Enabled | 🚀 Vercel Deployable | 📊 Full Featured | 🧪 Demo Mode Ready
 
-**Live Demo**: Deploy now to see your dashboard with realistic mock data!
+**Live Demo**: Deploy now to see your dashboard with real Ramp data!
