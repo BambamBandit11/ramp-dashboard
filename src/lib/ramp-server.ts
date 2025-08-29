@@ -9,11 +9,26 @@ class RampServerClient {
 
   constructor() {
     this.apiKey = process.env.RAMP_API_KEY || '';
-    this.useMockData = !this.apiKey || this.apiKey === 'demo_key_replace_with_real_key';
     
-    if (!this.useMockData && !this.apiKey) {
-      throw new Error('RAMP_API_KEY environment variable is required');
-    }
+    // Use mock data if:
+    // - No API key provided
+    // - API key is empty
+    // - API key contains "demo" or "test"
+    // - API key is the placeholder value
+    this.useMockData = !this.apiKey || 
+                       this.apiKey === '' ||
+                       this.apiKey.toLowerCase().includes('demo') ||
+                       this.apiKey.toLowerCase().includes('test') ||
+                       this.apiKey === 'demo_key_replace_with_real_key' ||
+                       this.apiKey === 'your_ramp_api_key_here' ||
+                       this.apiKey.length < 10;
+    
+    console.log('Ramp API Client initialized:', {
+      hasApiKey: !!this.apiKey,
+      apiKeyLength: this.apiKey.length,
+      useMockData: this.useMockData,
+      apiKeyPreview: this.apiKey ? this.apiKey.substring(0, 10) + '...' : 'none'
+    });
   }
 
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
@@ -40,11 +55,13 @@ class RampServerClient {
 
   async getTransactions(filters?: FilterOptions, page = 1, pageSize = 50): Promise<ApiResponse<RampTransaction>> {
     if (this.useMockData) {
-      // Use mock data for development
+      console.log('Using mock data for transactions');
+      // Use mock data for development/demo
       const filteredTransactions = filters ? filterMockTransactions(mockTransactions, filters) : mockTransactions;
       return createMockApiResponse(filteredTransactions, page, pageSize);
     }
 
+    console.log('Using real Ramp API for transactions');
     const params = new URLSearchParams({
       page: page.toString(),
       page_size: pageSize.toString(),
@@ -76,9 +93,11 @@ class RampServerClient {
 
   async getCards(): Promise<ApiResponse<RampCard>> {
     if (this.useMockData) {
+      console.log('Using mock data for cards');
       return createMockApiResponse(mockCards);
     }
 
+    console.log('Using real Ramp API for cards');
     const response = await this.request<any>('/cards');
     
     return {
@@ -92,9 +111,11 @@ class RampServerClient {
 
   async getUsers(): Promise<ApiResponse<RampUser>> {
     if (this.useMockData) {
+      console.log('Using mock data for users');
       return createMockApiResponse(mockUsers);
     }
 
+    console.log('Using real Ramp API for users');
     const response = await this.request<any>('/users');
     
     return {

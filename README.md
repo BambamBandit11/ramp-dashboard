@@ -2,7 +2,7 @@
 
 A lightweight, enterprise-ready web application dashboard with direct Ramp API integration. Built with Next.js, React, TypeScript, and TailwindCSS.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/BambamBandit11/ramp-dashboard&env=RAMP_API_KEY,NEXTAUTH_SECRET&envDescription=Required%20environment%20variables%20for%20Ramp%20API%20and%20authentication&envLink=https://github.com/BambamBandit11/ramp-dashboard%23environment-variables)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/BambamBandit11/ramp-dashboard&env=RAMP_API_KEY,NEXTAUTH_SECRET&envDescription=Leave%20RAMP_API_KEY%20empty%20for%20demo%20mode%20with%20mock%20data&envLink=https://github.com/BambamBandit11/ramp-dashboard%23environment-variables)
 
 ## ✨ Features
 
@@ -15,6 +15,7 @@ A lightweight, enterprise-ready web application dashboard with direct Ramp API i
 - 📱 **Responsive Design**: Works seamlessly on desktop and mobile devices
 - ⚡ **Serverless Functions**: Secure Ramp API integration via Vercel functions
 - 🎨 **Modern UI**: Clean, professional interface with TailwindCSS
+- 🧪 **Demo Mode**: Works with mock data when no API key is provided
 
 ## 🛠 Tech Stack
 
@@ -28,43 +29,34 @@ A lightweight, enterprise-ready web application dashboard with direct Ramp API i
 
 ## 🚀 Quick Deploy
 
-### Option 1: One-Click Deploy (Recommended)
+### Option 1: Demo Mode (Recommended for Testing)
 
 1. Click the "Deploy with Vercel" button above
 2. Connect your GitHub account
-3. Set the required environment variables:
-   - `RAMP_API_KEY`: Your Ramp API key (or `demo_key_replace_with_real_key` for demo)
-   - `NEXTAUTH_SECRET`: Random secret for session encryption
+3. **For demo mode, set these values**:
+   - `RAMP_API_KEY`: Leave **completely empty** or type `demo`
+   - `NEXTAUTH_SECRET`: Type any random text like `my-demo-secret-123`
 4. Deploy!
+5. Login with `demo@company.com` / `demo123`
 
-### Option 2: Manual Setup
+### Option 2: Production Mode (Real Ramp Data)
 
-1. **Fork this repository**
-2. **Clone to your local machine**:
-   ```bash
-   git clone https://github.com/BambamBandit11/ramp-dashboard.git
-   cd ramp-dashboard
-   npm install
-   ```
-3. **Set up environment variables**:
-   ```bash
-   cp .env.example .env.local
-   ```
-4. **Deploy to Vercel**:
-   ```bash
-   npm i -g vercel
-   vercel
-   ```
+1. Get your API key from [Ramp Developer Portal](https://developer.ramp.com)
+2. Click the "Deploy with Vercel" button above
+3. Set the environment variables:
+   - `RAMP_API_KEY`: Your actual Ramp API key (starts with `ramp_live_` or `ramp_sandbox_`)
+   - `NEXTAUTH_SECRET`: A secure random string (32+ characters)
+4. Deploy!
 
 ## 🔧 Environment Variables
 
-| Variable | Description | Required | Example |
-|----------|-------------|----------|----------|
-| `RAMP_API_KEY` | Your Ramp API key from [Ramp Developer Portal](https://developer.ramp.com) | Yes* | `ramp_live_...` |
-| `NEXTAUTH_SECRET` | Secret for session encryption (generate with `openssl rand -base64 32`) | Yes | `your-secret-here` |
-| `NEXTAUTH_URL` | Your app URL (auto-detected in production) | No | `https://your-app.vercel.app` |
+| Variable | Demo Mode | Production Mode | Required |
+|----------|-----------|-----------------|----------|
+| `RAMP_API_KEY` | Leave empty or `demo` | Your actual Ramp API key | No* |
+| `NEXTAUTH_SECRET` | Any random text | Secure random string | Yes |
+| `NEXTAUTH_URL` | Auto-detected | Your domain URL | No |
 
-*Note: The app will use mock data for development/demo if no API key is provided.
+*App automatically uses mock data when no valid API key is provided.
 
 ## 🎯 Getting Started
 
@@ -78,7 +70,7 @@ A lightweight, enterprise-ready web application dashboard with direct Ramp API i
 2. **Set up environment variables**:
    ```bash
    cp .env.example .env.local
-   # Edit .env.local with your values
+   # Edit .env.local - leave RAMP_API_KEY empty for demo mode
    ```
 
 3. **Start development server**:
@@ -149,7 +141,7 @@ src/
 
 ### API Integration
 - **rampApi**: Client-side API wrapper
-- **rampServerClient**: Server-side Ramp API client with mock data fallback
+- **rampServerClient**: Server-side Ramp API client with automatic mock data fallback
 - **useDashboardData**: Custom hook for data management
 
 ## 🔧 Customization
@@ -176,6 +168,7 @@ src/
 - **Proper Module Registration**: AG Grid setup prevents runtime errors
 - **Bundle Optimization**: Tree-shaking enabled
 - **SSR/Client Hydration**: Proper mounting prevents hydration mismatches
+- **Automatic Mock Data**: Seamless fallback when API is unavailable
 
 ## 🔒 Security
 
@@ -189,10 +182,15 @@ src/
 
 ### Common Issues
 
+**Demo Mode Not Working**:
+- ✅ Leave `RAMP_API_KEY` completely empty in Vercel
+- ✅ Or set it to `demo` or `test`
+- ✅ Check browser console for "Using mock data" messages
+
 **Build Failures**:
 - ✅ Turbopack disabled for stability
 - ✅ AG Grid modules properly registered
-- Check environment variables are set
+- Check environment variables are set correctly
 - Review build logs in Vercel dashboard
 
 **API Errors**:
@@ -236,6 +234,6 @@ For issues and questions:
 
 **Built with ❤️ for modern expense management**
 
-**Status**: ✅ Production Ready | 🔧 AG Grid Fixed | 🚀 Vercel Deployable | 📊 Full Featured
+**Status**: ✅ Production Ready | 🔧 AG Grid Fixed | 🚀 Vercel Deployable | 📊 Full Featured | 🧪 Demo Mode Ready
 
-**Live Demo**: Deploy now to see your live dashboard!
+**Live Demo**: Deploy now to see your dashboard with realistic mock data!
