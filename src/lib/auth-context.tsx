@@ -43,24 +43,34 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    
     // Check for existing session on mount
-    const savedSession = localStorage.getItem('auth-session');
-    if (savedSession) {
-      try {
+    try {
+      const savedSession = localStorage.getItem('auth-session');
+      if (savedSession) {
         const session: AuthSession = JSON.parse(savedSession);
         if (session.expiresAt > Date.now()) {
           setUser(session.user);
         } else {
           localStorage.removeItem('auth-session');
         }
-      } catch (err) {
+      }
+    } catch (error) {
+      console.error('Error loading auth session:', error);
+      if (typeof window !== 'undefined') {
         localStorage.removeItem('auth-session');
       }
     }
     setLoading(false);
-  }, []);
+  }, [mounted]);
 
   const login = async (credentials: LoginCredentials) => {
     setLoading(true);
@@ -78,7 +88,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
           expiresAt: Date.now() + (24 * 60 * 60 * 1000), // 24 hours
         };
 
-        localStorage.setItem('auth-session', JSON.stringify(session));
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('auth-session', JSON.stringify(session));
+        }
         setUser(DEMO_USER);
       } else {
         throw new Error('Invalid credentials. Use demo@company.com / demo123 for demo access.');
@@ -92,7 +104,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const logout = () => {
-    localStorage.removeItem('auth-session');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth-session');
+    }
     setUser(null);
     setError(null);
   };

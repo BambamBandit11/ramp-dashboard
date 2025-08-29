@@ -8,6 +8,8 @@ const nextConfig = {
     // Disable type checking during builds for development
     ignoreBuildErrors: true,
   },
+  // External packages for server components
+  serverExternalPackages: ['ag-grid-community', 'ag-grid-react'],
 };
 
 module.exports = nextConfig;

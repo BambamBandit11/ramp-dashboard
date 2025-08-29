@@ -17,7 +17,7 @@ A lightweight, enterprise-ready web application dashboard with direct Ramp API i
 
 - **Frontend**: Next.js 15, React 18, TypeScript
 - **Styling**: TailwindCSS
-- **Data Table**: AG Grid Community
+- **Data Table**: AG Grid Community (with proper module registration)
 - **API Integration**: Ramp API via serverless functions
 - **Authentication**: Custom auth system (SSO-ready)
 - **Deployment**: Vercel
@@ -136,6 +136,7 @@ src/
 │   └── ui/               # Reusable UI components
 ├── hooks/                # Custom React hooks
 ├── lib/                  # Utility functions and API clients
+│   └── ag-grid-setup.ts  # AG Grid module registration
 └── types/                # TypeScript type definitions
 ```
 
@@ -144,12 +145,24 @@ src/
 ### Dashboard Components
 - **StatsCards**: Key metrics display
 - **Filters**: Advanced filtering interface
-- **TransactionsTable**: AG Grid data table
+- **TransactionsTable**: AG Grid data table with proper module registration
 
 ### API Integration
 - **rampApi**: Client-side API wrapper
 - **rampServerClient**: Server-side Ramp API client
 - **useDashboardData**: Custom hook for data management
+
+## AG Grid Setup
+
+The application properly registers AG Grid Community modules to avoid console errors:
+
+```typescript
+// src/lib/ag-grid-setup.ts
+import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
+ModuleRegistry.registerModules([AllCommunityModule]);
+```
+
+This setup is automatically imported in the root layout to ensure modules are registered before any grid components are used.
 
 ## Customization
 
@@ -174,6 +187,7 @@ src/
 - **Filtering**: Server-side filtering reduces data transfer
 - **Caching**: Consider adding React Query for API caching
 - **Bundle Size**: Tree-shaking enabled, only imports used components
+- **Module Registration**: Proper AG Grid setup prevents runtime errors
 
 ## Security
 
@@ -181,6 +195,29 @@ src/
 - Client-side API calls go through serverless functions
 - Authentication tokens stored in localStorage (consider httpOnly cookies for production)
 - Input validation on all API endpoints
+
+## Troubleshooting
+
+### Common Issues
+
+**AG Grid Console Errors**:
+- ✅ **Fixed**: Module registration is properly configured
+- All community features are available via `AllCommunityModule`
+
+**Build Failures**:
+- Check environment variables are set
+- Verify Node.js version compatibility
+- Review build logs in Vercel dashboard
+
+**API Errors**:
+- Verify Ramp API key is valid
+- Check API rate limits
+- Review serverless function logs
+
+**Authentication Issues**:
+- Verify NEXTAUTH_SECRET is set
+- Check NEXTAUTH_URL matches deployment URL
+- Clear browser cache and cookies
 
 ## Monitoring and Analytics
 
@@ -212,3 +249,5 @@ For issues and questions:
 ---
 
 **Built with ❤️ for modern expense management**
+
+**Status**: ✅ Production Ready | 🔧 AG Grid Fixed | 🚀 Vercel Deployable
