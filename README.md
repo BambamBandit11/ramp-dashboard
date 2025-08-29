@@ -33,7 +33,7 @@ A lightweight, enterprise-ready web application dashboard with direct Ramp API i
 1. Click the "Deploy with Vercel" button above
 2. Connect your GitHub account
 3. Set the required environment variables:
-   - `RAMP_API_KEY`: Your Ramp API key
+   - `RAMP_API_KEY`: Your Ramp API key (or `demo_key_replace_with_real_key` for demo)
    - `NEXTAUTH_SECRET`: Random secret for session encryption
 4. Deploy!
 
@@ -238,4 +238,4 @@ For issues and questions:
 
 **Status**: ✅ Production Ready | 🔧 AG Grid Fixed | 🚀 Vercel Deployable | 📊 Full Featured
 
-**Live Demo**: [Coming Soon - Deploy to see your live dashboard!]
+**Live Demo**: Deploy now to see your live dashboard!
