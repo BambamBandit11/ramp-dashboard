@@ -205,6 +205,8 @@ class RampServerClient {
 
   private transformTransaction(rampTx: any): RampTransaction {
     // Handle Ramp's actual transaction structure
+    const receipts = rampTx.receipts?.map((r: any) => r.url || r).filter(Boolean) || [];
+    
     return {
       id: rampTx.id || rampTx.transaction_id,
       amount: (rampTx.amount || rampTx.amount_cents || 0) / 100, // Convert from cents
@@ -217,10 +219,16 @@ class RampServerClient {
       card_holder_name: rampTx.card_holder ? `${rampTx.card_holder.first_name || ''} ${rampTx.card_holder.last_name || ''}`.trim() : '',
       date: rampTx.user_transaction_time || rampTx.transaction_date || rampTx.created_at,
       status: this.mapStatus(rampTx.state || rampTx.status),
-      receipt_url: rampTx.receipts?.[0]?.url || rampTx.receipt_url,
+      receipt_url: receipts[0] || rampTx.receipt_url,
+      receipts: receipts,
       memo: rampTx.memo || rampTx.note || '',
       department: rampTx.user?.department?.name || rampTx.department?.name,
-      location: rampTx.merchant?.descriptor || rampTx.location,
+      location: rampTx.merchant?.city ? `${rampTx.merchant.city}, ${rampTx.merchant.state || rampTx.merchant.country || ''}`.trim() : rampTx.location,
+      spend_program_name: rampTx.spending_limit?.display_name || rampTx.spend_program?.name,
+      spend_program_id: rampTx.spending_limit?.id || rampTx.spend_program?.id,
+      policy_violations: rampTx.policy_violations || [],
+      is_compliant: !rampTx.policy_violations || rampTx.policy_violations.length === 0,
+      pending_approver: rampTx.pending_reviewer ? `${rampTx.pending_reviewer.first_name || ''} ${rampTx.pending_reviewer.last_name || ''}`.trim() : undefined,
       created_at: rampTx.created_at,
       updated_at: rampTx.updated_at,
     };

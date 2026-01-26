@@ -14,6 +14,12 @@ export function useDashboardData() {
     pendingAmount: 0,
     approvedTransactions: 0,
     approvedAmount: 0,
+    ytdSpend: 0,
+    thisMonthSpend: 0,
+    reimbursementsCount: 0,
+    reimbursementsAmount: 0,
+    receiptsCount: 0,
+    missingReceiptsCount: 0,
   });
   const [filters, setFilters] = useState<FilterOptions>({});
   const [loading, setLoading] = useState(false);
@@ -25,11 +31,28 @@ export function useDashboardData() {
   }, []);
 
   const calculateStats = useCallback((transactions: RampTransaction[]): DashboardStats => {
+    const now = new Date();
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
     const stats = transactions.reduce(
       (acc, transaction) => {
+        const txDate = new Date(transaction.date);
+        
         acc.totalTransactions += 1;
         acc.totalAmount += transaction.amount;
 
+        // YTD spend
+        if (txDate >= startOfYear) {
+          acc.ytdSpend += transaction.amount;
+        }
+
+        // This month spend
+        if (txDate >= startOfMonth) {
+          acc.thisMonthSpend += transaction.amount;
+        }
+
+        // Status-based counts
         switch (transaction.status) {
           case 'pending':
             acc.pendingTransactions += 1;
@@ -39,6 +62,17 @@ export function useDashboardData() {
             acc.approvedTransactions += 1;
             acc.approvedAmount += transaction.amount;
             break;
+          case 'reimbursed':
+            acc.reimbursementsCount += 1;
+            acc.reimbursementsAmount += transaction.amount;
+            break;
+        }
+
+        // Receipt tracking
+        if (transaction.receipt_url || (transaction.receipts && transaction.receipts.length > 0)) {
+          acc.receiptsCount += 1;
+        } else {
+          acc.missingReceiptsCount += 1;
         }
 
         return acc;
@@ -50,6 +84,12 @@ export function useDashboardData() {
         pendingAmount: 0,
         approvedTransactions: 0,
         approvedAmount: 0,
+        ytdSpend: 0,
+        thisMonthSpend: 0,
+        reimbursementsCount: 0,
+        reimbursementsAmount: 0,
+        receiptsCount: 0,
+        missingReceiptsCount: 0,
       }
     );
 

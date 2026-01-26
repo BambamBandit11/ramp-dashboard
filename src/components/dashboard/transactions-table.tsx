@@ -1,16 +1,16 @@
 'use client';
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { ColDef, GridReadyEvent, ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
 
 // Register AG Grid modules (must be done before grid renders)
 ModuleRegistry.registerModules([AllCommunityModule]);
 import { RampTransaction } from '@/types/ramp';
-import { formatCurrency, formatDateTime } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, CheckCircle, XCircle, FileText, ExternalLink } from 'lucide-react';
 
 // Import AG Grid styles
 import 'ag-grid-community/styles/ag-grid.css';
@@ -21,6 +21,16 @@ interface TransactionsTableProps {
   loading?: boolean;
   onRefresh?: () => void;
 }
+
+// Format date nicely
+const formatDate = (dateStr: string) => {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric', 
+    year: 'numeric' 
+  });
+};
 
 // Status cell renderer
 const StatusCellRenderer = ({ value }: { value: string }) => {
@@ -41,7 +51,7 @@ const StatusCellRenderer = ({ value }: { value: string }) => {
 
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(value)}`}>
-      {value.charAt(0).toUpperCase() + value.slice(1)}
+      {value ? value.charAt(0).toUpperCase() + value.slice(1) : 'Unknown'}
     </span>
   );
 };
@@ -49,7 +59,7 @@ const StatusCellRenderer = ({ value }: { value: string }) => {
 // Currency cell renderer
 const CurrencyCellRenderer = ({ value, data }: { value: number; data: RampTransaction }) => {
   return (
-    <span className="font-medium">
+    <span className="font-medium text-teal-600">
       {formatCurrency(value, data.currency)}
     </span>
   );
@@ -58,9 +68,47 @@ const CurrencyCellRenderer = ({ value, data }: { value: number; data: RampTransa
 // Date cell renderer
 const DateCellRenderer = ({ value }: { value: string }) => {
   return (
-    <span className="text-gray-600">
-      {formatDateTime(value)}
+    <span className="text-gray-700">
+      {formatDate(value)}
     </span>
+  );
+};
+
+// Policy compliance cell renderer
+const PolicyCellRenderer = ({ data }: { data: RampTransaction }) => {
+  const isCompliant = data.is_compliant !== false && (!data.policy_violations || data.policy_violations.length === 0);
+  return (
+    <div className="flex items-center justify-center">
+      {isCompliant ? (
+        <CheckCircle className="h-5 w-5 text-green-500" />
+      ) : (
+        <XCircle className="h-5 w-5 text-red-500" />
+      )}
+    </div>
+  );
+};
+
+// Receipt cell renderer
+const ReceiptCellRenderer = ({ data }: { data: RampTransaction }) => {
+  const hasReceipt = data.receipt_url || (data.receipts && data.receipts.length > 0);
+  const receiptUrl = data.receipt_url || (data.receipts && data.receipts[0]);
+  
+  return (
+    <div className="flex items-center justify-center">
+      {hasReceipt ? (
+        <a 
+          href={receiptUrl} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="flex items-center text-green-500 hover:text-green-700"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <CheckCircle className="h-5 w-5" />
+        </a>
+      ) : (
+        <XCircle className="h-5 w-5 text-red-500" />
+      )}
+    </div>
   );
 };
 
@@ -69,68 +117,95 @@ export function TransactionsTable({ transactions, loading, onRefresh }: Transact
     {
       headerName: 'Date',
       field: 'date',
-      width: 150,
+      minWidth: 120,
+      width: 120,
       cellRenderer: DateCellRenderer,
       sort: 'desc',
     },
     {
       headerName: 'Employee',
       field: 'employee_name',
-      width: 150,
+      minWidth: 140,
+      width: 140,
       filter: 'agTextColumnFilter',
+    },
+    {
+      headerName: 'Department',
+      field: 'department',
+      minWidth: 160,
+      width: 160,
+      filter: 'agSetColumnFilter',
     },
     {
       headerName: 'Merchant',
       field: 'merchant_name',
-      width: 200,
+      minWidth: 150,
+      width: 150,
       filter: 'agTextColumnFilter',
-    },
-    {
-      headerName: 'Description',
-      field: 'description',
-      width: 250,
-      filter: 'agTextColumnFilter',
-      tooltipField: 'description',
     },
     {
       headerName: 'Category',
       field: 'category_name',
-      width: 150,
+      minWidth: 180,
+      width: 180,
       filter: 'agSetColumnFilter',
     },
     {
       headerName: 'Amount',
       field: 'amount',
-      width: 120,
+      minWidth: 100,
+      width: 100,
       cellRenderer: CurrencyCellRenderer,
       filter: 'agNumberColumnFilter',
       type: 'numericColumn',
     },
     {
-      headerName: 'Status',
-      field: 'status',
-      width: 120,
-      cellRenderer: StatusCellRenderer,
-      filter: 'agSetColumnFilter',
-    },
-    {
-      headerName: 'Department',
-      field: 'department',
-      width: 130,
-      filter: 'agSetColumnFilter',
-    },
-    {
-      headerName: 'Card Holder',
-      field: 'card_holder_name',
-      width: 150,
+      headerName: 'Location',
+      field: 'location',
+      minWidth: 140,
+      width: 140,
       filter: 'agTextColumnFilter',
     },
     {
       headerName: 'Memo',
       field: 'memo',
-      width: 200,
+      minWidth: 200,
+      flex: 1,
       filter: 'agTextColumnFilter',
       tooltipField: 'memo',
+    },
+    {
+      headerName: 'Receipt',
+      field: 'receipt_url',
+      minWidth: 80,
+      width: 80,
+      cellRenderer: ReceiptCellRenderer,
+      filter: false,
+      sortable: false,
+    },
+    {
+      headerName: 'Policy',
+      field: 'is_compliant',
+      minWidth: 80,
+      width: 80,
+      cellRenderer: PolicyCellRenderer,
+      filter: false,
+      sortable: false,
+    },
+    {
+      headerName: 'Status',
+      field: 'status',
+      minWidth: 110,
+      width: 110,
+      cellRenderer: StatusCellRenderer,
+      filter: 'agSetColumnFilter',
+    },
+    {
+      headerName: 'Approver',
+      field: 'pending_approver',
+      minWidth: 130,
+      width: 130,
+      filter: 'agTextColumnFilter',
     },
   ], []);
 
