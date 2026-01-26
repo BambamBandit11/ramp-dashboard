@@ -213,6 +213,19 @@ class RampServerClient {
     // Handle Ramp's actual transaction structure
     const receipts = rampTx.receipts?.map((r: any) => r.url || r).filter(Boolean) || [];
     
+    // Get card holder name - handle both nested object and direct string
+    const cardHolderName = typeof rampTx.card_holder === 'string' 
+      ? rampTx.card_holder 
+      : rampTx.card_holder 
+        ? `${rampTx.card_holder.first_name || ''} ${rampTx.card_holder.last_name || ''}`.trim() 
+        : '';
+    
+    // Get user/employee name - fall back to card holder if not available
+    const userName = rampTx.user 
+      ? `${rampTx.user.first_name || ''} ${rampTx.user.last_name || ''}`.trim() 
+      : '';
+    const employeeName = userName || cardHolderName;
+    
     return {
       id: rampTx.id || rampTx.transaction_id,
       amount: (rampTx.amount || rampTx.amount_cents || 0) / 100, // Convert from cents
@@ -220,9 +233,9 @@ class RampServerClient {
       description: rampTx.merchant_name || rampTx.description || rampTx.memo || '',
       merchant_name: rampTx.merchant?.name || rampTx.merchant_name || '',
       category_name: rampTx.category?.name || rampTx.category_name || 'Uncategorized',
-      employee_name: rampTx.user ? `${rampTx.user.first_name || ''} ${rampTx.user.last_name || ''}`.trim() : '',
+      employee_name: employeeName,
       employee_email: rampTx.user?.email || '',
-      card_holder_name: rampTx.card_holder ? `${rampTx.card_holder.first_name || ''} ${rampTx.card_holder.last_name || ''}`.trim() : '',
+      card_holder_name: cardHolderName,
       date: rampTx.user_transaction_time || rampTx.transaction_date || rampTx.created_at,
       status: this.mapStatus(rampTx.state || rampTx.status),
       receipt_url: receipts[0] || rampTx.receipt_url,
