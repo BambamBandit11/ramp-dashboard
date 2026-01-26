@@ -211,45 +211,73 @@ class RampServerClient {
 
   private transformTransaction(rampTx: any): RampTransaction {
     // Handle Ramp's actual transaction structure
-    const receipts = rampTx.receipts?.map((r: any) => r.url || r).filter(Boolean) || [];
+    const receipts = rampTx.receipts?.map((r: any) => r.receipt_url || r.url || r).filter(Boolean) || [];
     
-    // Get card holder name - handle both nested object and direct string
-    const cardHolderName = typeof rampTx.card_holder === 'string' 
-      ? rampTx.card_holder 
-      : rampTx.card_holder 
-        ? `${rampTx.card_holder.first_name || ''} ${rampTx.card_holder.last_name || ''}`.trim() 
-        : '';
+    // Get card holder info - Ramp returns nested object with first_name, last_name, department_name, location_name
+    const cardHolder = rampTx.card_holder || {};
+    const cardHolderName = `${cardHolder.first_name || ''} ${cardHolder.last_name || ''}`.trim();
     
     // Get user/employee name - fall back to card holder if not available
-    const userName = rampTx.user 
-      ? `${rampTx.user.first_name || ''} ${rampTx.user.last_name || ''}`.trim() 
-      : '';
+    const user = rampTx.user || {};
+    const userName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
     const employeeName = userName || cardHolderName;
+    
+    // Get department from card_holder or accounting_categories
+    let department = cardHolder.department_name;
+    if (!department && rampTx.accounting_categories) {
+      const deptCategory = rampTx.accounting_categories.find(
+        (c: any) => c.tracking_category_remote_type === 'OTHER' && c.tracking_category_remote_name === 'Department'
+      );
+      department = deptCategory?.category_name;
+    }
+    
+    // Get location from card_holder or merchant_location
+    let location = cardHolder.location_name;
+    if (!location && rampTx.merchant_location) {
+      const ml = rampTx.merchant_location;
+      location = [ml.city, ml.state, ml.country].filter(Boolean).join(', ');
+    }
+    
+    // Get category from sk_category_name or accounting_categories
+    let categoryName = rampTx.sk_category_name || 'Uncategorized';
+    if (rampTx.accounting_categories) {
+      const glCategory = rampTx.accounting_categories.find(
+        (c: any) => c.tracking_category_remote_type === 'GL_ACCOUNT'
+      );
+      if (glCategory?.category_name) {
+        categoryName = glCategory.category_name;
+      }
+    }
+    
+    // Amount is already in dollars (not cents) based on the sample
+    const amount = typeof rampTx.amount === 'number' 
+      ? rampTx.amount 
+      : (rampTx.original_transaction_amount?.amount || 0) / 100;
     
     return {
       id: rampTx.id || rampTx.transaction_id,
-      amount: (rampTx.amount || rampTx.amount_cents || 0) / 100, // Convert from cents
+      amount: amount,
       currency: rampTx.currency_code || rampTx.currency || 'USD',
-      description: rampTx.merchant_name || rampTx.description || rampTx.memo || '',
-      merchant_name: rampTx.merchant?.name || rampTx.merchant_name || '',
-      category_name: rampTx.category?.name || rampTx.category_name || 'Uncategorized',
+      description: rampTx.merchant_descriptor || rampTx.merchant_name || rampTx.memo || '',
+      merchant_name: rampTx.merchant_name || '',
+      category_name: categoryName,
       employee_name: employeeName,
-      employee_email: rampTx.user?.email || '',
+      employee_email: user.email || '',
       card_holder_name: cardHolderName,
-      date: rampTx.user_transaction_time || rampTx.transaction_date || rampTx.created_at,
+      date: rampTx.user_transaction_time || rampTx.accounting_date || rampTx.created_at,
       status: this.mapStatus(rampTx.state || rampTx.status),
-      receipt_url: receipts[0] || rampTx.receipt_url,
+      receipt_url: receipts[0],
       receipts: receipts,
-      memo: rampTx.memo || rampTx.note || '',
-      department: rampTx.user?.department?.name || rampTx.department?.name,
-      location: rampTx.merchant?.city ? `${rampTx.merchant.city}, ${rampTx.merchant.state || rampTx.merchant.country || ''}`.trim() : rampTx.location,
-      spend_program_name: rampTx.spending_limit?.display_name || rampTx.spend_program?.name,
-      spend_program_id: rampTx.spending_limit?.id || rampTx.spend_program?.id,
+      memo: rampTx.memo || '',
+      department: department,
+      location: location,
+      spend_program_name: rampTx.limit_id ? `Program ${rampTx.limit_id.substring(0, 8)}` : undefined,
+      spend_program_id: rampTx.limit_id,
       policy_violations: rampTx.policy_violations || [],
       is_compliant: !rampTx.policy_violations || rampTx.policy_violations.length === 0,
-      pending_approver: rampTx.pending_reviewer ? `${rampTx.pending_reviewer.first_name || ''} ${rampTx.pending_reviewer.last_name || ''}`.trim() : undefined,
-      created_at: rampTx.created_at,
-      updated_at: rampTx.updated_at,
+      pending_approver: undefined, // Will need separate API call to get approvers
+      created_at: rampTx.created_at || rampTx.user_transaction_time,
+      updated_at: rampTx.synced_at || rampTx.user_transaction_time,
     };
   }
 
