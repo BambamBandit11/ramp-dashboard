@@ -127,6 +127,7 @@ class RampServerClient {
     
     const params = new URLSearchParams({
       page_size: pageSize.toString(),
+      expand: 'user,merchant,card_holder,receipts',
     });
 
     // Add pagination if not first page
