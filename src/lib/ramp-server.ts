@@ -158,9 +158,10 @@ class RampServerClient {
 
     const response = await this.request<any>(`/developer/v1/transactions?${params}`);
     
-    // Log first transaction to debug structure
-    if (response.data?.[0]) {
-      console.log('Sample Ramp transaction structure:', JSON.stringify(response.data[0], null, 2));
+    // Log first transaction with receipts to debug structure
+    const txWithReceipt = response.data?.find((tx: any) => tx.receipts && tx.receipts.length > 0);
+    if (txWithReceipt) {
+      console.log('Sample Ramp transaction with receipt:', JSON.stringify(txWithReceipt.receipts, null, 2));
     }
     
     // Transform Ramp API response to our format
