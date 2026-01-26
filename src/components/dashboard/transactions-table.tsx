@@ -74,15 +74,17 @@ const DateCellRenderer = ({ value }: { value: string }) => {
   );
 };
 
-// Policy compliance cell renderer
+// Policy compliance cell renderer with tooltip for violations
 const PolicyCellRenderer = ({ data }: { data: RampTransaction }) => {
   const isCompliant = data.is_compliant !== false && (!data.policy_violations || data.policy_violations.length === 0);
+  const violationText = data.policy_violations?.join(', ') || 'Policy violation';
+  
   return (
-    <div className="flex items-center justify-center">
+    <div className="flex items-center justify-center" title={isCompliant ? 'In Policy' : violationText}>
       {isCompliant ? (
         <CheckCircle className="h-5 w-5 text-green-500" />
       ) : (
-        <XCircle className="h-5 w-5 text-red-500" />
+        <XCircle className="h-5 w-5 text-red-500 cursor-help" />
       )}
     </div>
   );
@@ -195,25 +197,19 @@ export function TransactionsTable({ transactions, loading, onRefresh }: Transact
     {
       headerName: 'Status',
       field: 'status',
-      minWidth: 110,
-      width: 110,
+      minWidth: 100,
+      width: 100,
       cellRenderer: StatusCellRenderer,
-      filter: 'agSetColumnFilter',
-    },
-    {
-      headerName: 'Approver',
-      field: 'pending_approver',
-      minWidth: 130,
-      width: 130,
-      filter: 'agTextColumnFilter',
     },
   ], []);
 
   const defaultColDef = useMemo(() => ({
     sortable: true,
     resizable: true,
-    filter: true,
-    floatingFilter: true,
+    filter: false,  // Disable floating filters - use filter pane instead
+    floatingFilter: false,  // Remove the filter row below headers
+    wrapText: true,  // Enable text wrapping
+    autoHeight: true,  // Auto-adjust row height for wrapped text
   }), []);
 
   const onGridReady = useCallback((params: GridReadyEvent) => {

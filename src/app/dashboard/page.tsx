@@ -73,8 +73,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main Content - Full width */}
+      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-8">
           {/* Stats Cards */}
           <StatsCards stats={stats} loading={loading} />
