@@ -6,7 +6,8 @@ import { RampTransaction, FilterOptions, DashboardStats } from '@/types/ramp';
 import { downloadFile } from '@/lib/utils';
 
 export function useDashboardData() {
-  const [transactions, setTransactions] = useState<RampTransaction[]>([]);
+  const [allTransactions, setAllTransactions] = useState<RampTransaction[]>([]);
+  const [filteredTransactions, setFilteredTransactions] = useState<RampTransaction[]>([]);
   const [stats, setStats] = useState<DashboardStats>({
     totalTransactions: 0,
     totalAmount: 0,
@@ -96,6 +97,48 @@ export function useDashboardData() {
     return stats;
   }, []);
 
+  // Apply client-side filters for multi-select options
+  const applyClientFilters = useCallback((transactions: RampTransaction[], currentFilters: FilterOptions): RampTransaction[] => {
+    return transactions.filter(tx => {
+      // Multi-select department filter
+      if (currentFilters.departments && currentFilters.departments.length > 0) {
+        if (!tx.department || !currentFilters.departments.includes(tx.department)) {
+          return false;
+        }
+      }
+      
+      // Multi-select category filter
+      if (currentFilters.categories && currentFilters.categories.length > 0) {
+        if (!tx.category_name || !currentFilters.categories.includes(tx.category_name)) {
+          return false;
+        }
+      }
+      
+      // Multi-select merchant filter
+      if (currentFilters.merchants && currentFilters.merchants.length > 0) {
+        if (!tx.merchant_name || !currentFilters.merchants.includes(tx.merchant_name)) {
+          return false;
+        }
+      }
+      
+      // Multi-select spend program filter
+      if (currentFilters.spendPrograms && currentFilters.spendPrograms.length > 0) {
+        if (!tx.spend_program_name || !currentFilters.spendPrograms.includes(tx.spend_program_name)) {
+          return false;
+        }
+      }
+      
+      // Policy compliance filter
+      if (currentFilters.policyCompliance) {
+        const isCompliant = tx.is_compliant !== false && (!tx.policy_violations || tx.policy_violations.length === 0);
+        if (currentFilters.policyCompliance === 'compliant' && !isCompliant) return false;
+        if (currentFilters.policyCompliance === 'non-compliant' && isCompliant) return false;
+      }
+      
+      return true;
+    });
+  }, []);
+
   const fetchTransactions = useCallback(async (currentFilters: FilterOptions = {}) => {
     if (!mounted) return;
     
@@ -103,9 +146,23 @@ export function useDashboardData() {
     setError(null);
 
     try {
-      const response = await rampApi.getTransactions(currentFilters, 1, 1000); // Get more data for better stats
-      setTransactions(response.data);
-      setStats(calculateStats(response.data));
+      // Fetch with server-side filters (employee, status, date, amount)
+      const serverFilters: FilterOptions = {
+        employee: currentFilters.employee,
+        status: currentFilters.status,
+        dateFrom: currentFilters.dateFrom,
+        dateTo: currentFilters.dateTo,
+        minAmount: currentFilters.minAmount,
+        maxAmount: currentFilters.maxAmount,
+      };
+      
+      const response = await rampApi.getTransactions(serverFilters, 1, 1000);
+      setAllTransactions(response.data);
+      
+      // Apply client-side multi-select filters
+      const filtered = applyClientFilters(response.data, currentFilters);
+      setFilteredTransactions(filtered);
+      setStats(calculateStats(filtered));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch transactions';
       setError(errorMessage);
@@ -113,7 +170,7 @@ export function useDashboardData() {
     } finally {
       setLoading(false);
     }
-  }, [calculateStats, mounted]);
+  }, [calculateStats, applyClientFilters, mounted]);
 
   const refreshData = useCallback(() => {
     if (mounted) {
@@ -124,9 +181,21 @@ export function useDashboardData() {
   const updateFilters = useCallback((newFilters: FilterOptions) => {
     if (mounted) {
       setFilters(newFilters);
-      fetchTransactions(newFilters);
+      
+      // For multi-select filters, apply client-side filtering immediately
+      const hasOnlyClientFilters = !newFilters.employee && !newFilters.status && 
+        !newFilters.dateFrom && !newFilters.dateTo && 
+        !newFilters.minAmount && !newFilters.maxAmount;
+      
+      if (hasOnlyClientFilters && allTransactions.length > 0) {
+        const filtered = applyClientFilters(allTransactions, newFilters);
+        setFilteredTransactions(filtered);
+        setStats(calculateStats(filtered));
+      } else {
+        fetchTransactions(newFilters);
+      }
     }
-  }, [fetchTransactions, mounted]);
+  }, [fetchTransactions, applyClientFilters, calculateStats, allTransactions, mounted]);
 
   const exportData = useCallback(async (format: 'csv' | 'excel') => {
     if (!mounted) return;
@@ -153,7 +222,8 @@ export function useDashboardData() {
   }, [mounted, fetchTransactions]);
 
   return {
-    transactions,
+    transactions: filteredTransactions,
+    allTransactions,
     stats,
     filters,
     loading,

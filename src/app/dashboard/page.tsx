@@ -10,6 +10,7 @@ export default function DashboardPage() {
   const [mounted, setMounted] = useState(false);
   const {
     transactions,
+    allTransactions,
     stats,
     filters,
     loading,
@@ -84,6 +85,7 @@ export default function DashboardPage() {
             onFiltersChange={updateFilters}
             onExport={exportData}
             loading={loading}
+            transactions={allTransactions}
           />
 
           {/* Transactions Table */}
