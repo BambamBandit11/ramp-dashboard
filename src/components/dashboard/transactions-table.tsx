@@ -2,7 +2,10 @@
 
 import { useMemo, useCallback } from 'react';
 import { AgGridReact } from 'ag-grid-react';
-import { ColDef, GridReadyEvent } from 'ag-grid-community';
+import { ColDef, GridReadyEvent, ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
+
+// Register AG Grid modules (must be done before grid renders)
+ModuleRegistry.registerModules([AllCommunityModule]);
 import { RampTransaction } from '@/types/ramp';
 import { formatCurrency, formatDateTime } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
