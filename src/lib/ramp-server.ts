@@ -157,6 +157,11 @@ class RampServerClient {
 
     const response = await this.request<any>(`/developer/v1/transactions?${params}`);
     
+    // Log first transaction to debug structure
+    if (response.data?.[0]) {
+      console.log('Sample Ramp transaction structure:', JSON.stringify(response.data[0], null, 2));
+    }
+    
     // Transform Ramp API response to our format
     return {
       data: response.data?.map((tx: any) => this.transformTransaction(tx)) || [],
