@@ -22,7 +22,9 @@ export function useDashboardData() {
     receiptsCount: 0,
     missingReceiptsCount: 0,
   });
-  const [filters, setFilters] = useState<FilterOptions>({});
+  const [filters, setFilters] = useState<FilterOptions>({
+    dateFrom: '2026-01-01', // Default to YTD
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);

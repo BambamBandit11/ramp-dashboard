@@ -247,7 +247,7 @@ export function Filters({ filters, onFiltersChange, onExport, loading, transacti
         {/* Advanced Filters - Expandable */}
         {isExpanded && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-[#2F2D33]">
               <MultiSelect
                 label="Department"
                 options={uniqueDepartments}

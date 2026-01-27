@@ -24,3 +24,28 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* AG Grid dark theme customizations */
+.ag-theme-quartz-dark {
+  --ag-foreground-color: #e5e5e5;
+  --ag-background-color: #18171A;
+  --ag-header-background-color: #2F2D33;
+  --ag-header-foreground-color: #ffffff;
+  --ag-odd-row-background-color: #1a1a1c;
+  --ag-row-hover-color: #2F2D33;
+  --ag-border-color: #2F2D33;
+  --ag-secondary-foreground-color: #a0a0a0;
+}
+
+.ag-theme-quartz-dark .ag-cell {
+  color: #e5e5e5;
+}
+
+.ag-theme-quartz-dark .ag-header-cell-text {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.ag-theme-quartz-dark .ag-paging-panel {
+  color: #e5e5e5;
+}

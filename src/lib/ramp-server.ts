@@ -125,52 +125,75 @@ class RampServerClient {
 
     console.log('Fetching real transactions from Ramp API...');
     
-    const params = new URLSearchParams({
-      page_size: pageSize.toString(),
-      expand: 'user,merchant,card_holder,receipts',
-    });
+    // Build base params for filtering
+    const buildParams = (startingAfter?: string) => {
+      const params = new URLSearchParams({
+        page_size: '100', // Always fetch max per page for efficiency
+        expand: 'user,merchant,card_holder,receipts',
+      });
 
-    // Add pagination if not first page
-    if (page > 1) {
-      params.append('page', page.toString());
-    }
-
-    // Map our filter options to Ramp API parameters
-    if (filters) {
-      if (filters.employee) params.append('user_id', filters.employee);
-      if (filters.category) params.append('category_id', filters.category);
-      if (filters.dateFrom) params.append('from_date', filters.dateFrom);
-      if (filters.dateTo) params.append('to_date', filters.dateTo);
-      if (filters.status) {
-        // Map our status values to Ramp's status values
-        const statusMap: Record<string, string> = {
-          'pending': 'PENDING',
-          'approved': 'CLEARED',
-          'declined': 'DECLINED',
-          'reimbursed': 'REIMBURSED'
-        };
-        params.append('state', statusMap[filters.status] || filters.status.toUpperCase());
+      // Use cursor-based pagination if we have a cursor
+      if (startingAfter) {
+        params.append('start', startingAfter);
       }
-      if (filters.minAmount) params.append('min_amount', (filters.minAmount * 100).toString()); // Convert to cents
-      if (filters.maxAmount) params.append('max_amount', (filters.maxAmount * 100).toString());
-      if (filters.department) params.append('department_id', filters.department);
+
+      // Map our filter options to Ramp API parameters
+      if (filters) {
+        if (filters.employee) params.append('user_id', filters.employee);
+        if (filters.category) params.append('category_id', filters.category);
+        if (filters.dateFrom) params.append('from_date', filters.dateFrom);
+        if (filters.dateTo) params.append('to_date', filters.dateTo);
+        if (filters.status) {
+          const statusMap: Record<string, string> = {
+            'pending': 'PENDING',
+            'approved': 'CLEARED',
+            'declined': 'DECLINED',
+            'reimbursed': 'REIMBURSED'
+          };
+          params.append('state', statusMap[filters.status] || filters.status.toUpperCase());
+        }
+        if (filters.minAmount) params.append('min_amount', (filters.minAmount * 100).toString());
+        if (filters.maxAmount) params.append('max_amount', (filters.maxAmount * 100).toString());
+        if (filters.department) params.append('department_id', filters.department);
+      }
+      
+      return params;
+    };
+
+    // Fetch ALL pages if pageSize > 100 (indicates "fetch all")
+    const fetchAll = pageSize > 100;
+    const allTransactions: RampTransaction[] = [];
+    let cursor: string | undefined = undefined;
+    let hasMore = true;
+    let pageCount = 0;
+    const maxPages = 50; // Safety limit: 50 pages * 100 = 5000 transactions max
+
+    while (hasMore && pageCount < maxPages) {
+      const params = buildParams(cursor);
+      const response = await this.request<any>(`/developer/v1/transactions?${params}`);
+      
+      const transformed = response.data?.map((tx: any) => this.transformTransaction(tx)) || [];
+      allTransactions.push(...transformed);
+      
+      pageCount++;
+      console.log(`Fetched page ${pageCount}: ${transformed.length} transactions (total: ${allTransactions.length})`);
+      
+      // Check if there are more pages
+      hasMore = fetchAll && response.page?.next !== undefined && response.page?.next !== null;
+      cursor = response.page?.next;
+      
+      // If not fetching all, just return first page
+      if (!fetchAll) break;
     }
 
-    const response = await this.request<any>(`/developer/v1/transactions?${params}`);
+    console.log(`Total transactions fetched: ${allTransactions.length} across ${pageCount} pages`);
     
-    // Log first transaction with receipts to debug structure
-    const txWithReceipt = response.data?.find((tx: any) => tx.receipts && tx.receipts.length > 0);
-    if (txWithReceipt) {
-      console.log('Sample Ramp transaction with receipt:', JSON.stringify(txWithReceipt.receipts, null, 2));
-    }
-    
-    // Transform Ramp API response to our format
     return {
-      data: response.data?.map((tx: any) => this.transformTransaction(tx)) || [],
-      page: response.page || page,
-      page_size: response.page_size || pageSize,
-      total_count: response.total_count || response.data?.length || 0,
-      has_more: response.has_more || false,
+      data: allTransactions,
+      page: 1,
+      page_size: allTransactions.length,
+      total_count: allTransactions.length,
+      has_more: false,
     };
   }
 
