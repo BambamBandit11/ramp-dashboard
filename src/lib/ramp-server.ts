@@ -212,7 +212,11 @@ class RampServerClient {
 
   private transformTransaction(rampTx: any): RampTransaction {
     // Handle Ramp's actual transaction structure
-    const receipts = rampTx.receipts?.map((r: any) => r.receipt_url || r.url || r).filter(Boolean) || [];
+    // Receipts are UUIDs - construct Ramp receipt URLs
+    const receiptIds = rampTx.receipts || [];
+    const receipts = receiptIds.map((id: string) => 
+      `https://app.ramp.com/receipts/${id}`
+    );
     
     // Get card holder info - Ramp returns nested object with first_name, last_name, department_name, location_name
     const cardHolder = rampTx.card_holder || {};
