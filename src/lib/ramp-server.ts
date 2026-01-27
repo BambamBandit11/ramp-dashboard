@@ -201,11 +201,16 @@ class RampServerClient {
       allTransactions.push(...transformed);
       
       pageCount++;
+      
+      // Log pagination info to debug
       console.log(`Fetched page ${pageCount}: ${transformed.length} transactions (total: ${allTransactions.length})`);
+      console.log('Pagination info:', JSON.stringify(response.page || 'no page field'));
       
       // Check if there are more pages - Ramp returns page.next as a full URL
       nextUrl = response.page?.next || null;
       hasMore = fetchAll && nextUrl !== null;
+      
+      console.log(`Has more pages: ${hasMore}, nextUrl: ${nextUrl ? 'yes' : 'no'}`);
       
       // If not fetching all, just return first page
       if (!fetchAll) break;
@@ -245,47 +250,9 @@ class RampServerClient {
       return this.spendProgramCache;
     }
 
-    try {
-      console.log('Fetching spend programs from Ramp API...');
-      
-      // Try spend-programs endpoint first
-      try {
-        const spResponse = await this.request<any>('/developer/v1/spend-programs');
-        console.log('Spend programs response:', JSON.stringify(spResponse, null, 2).substring(0, 500));
-        if (spResponse.data) {
-          for (const sp of spResponse.data) {
-            if (sp.id && sp.display_name) {
-              this.spendProgramCache.set(sp.id, sp.display_name);
-            } else if (sp.id && sp.name) {
-              this.spendProgramCache.set(sp.id, sp.name);
-            }
-          }
-        }
-      } catch (spError) {
-        console.log('Spend programs endpoint failed, trying limits...', spError);
-      }
-      
-      // Also try limits endpoint (virtual cards/limits can have display names)
-      try {
-        const limitsResponse = await this.request<any>('/developer/v1/limits');
-        console.log('Limits response sample:', JSON.stringify(limitsResponse.data?.[0], null, 2));
-        if (limitsResponse.data) {
-          for (const limit of limitsResponse.data) {
-            // Try various field names Ramp might use
-            const name = limit.display_name || limit.name || limit.limit_name;
-            if (limit.id && name && !this.spendProgramCache.has(limit.id)) {
-              this.spendProgramCache.set(limit.id, name);
-            }
-          }
-        }
-      } catch (limitsError) {
-        console.log('Limits endpoint failed:', limitsError);
-      }
-      
-      console.log(`Cached ${this.spendProgramCache.size} spend programs/limits`);
-    } catch (error) {
-      console.error('Failed to fetch spend programs:', error);
-    }
+    // Note: Requires limits:read scope which may not be enabled
+    // For now, skip this to avoid errors - spend programs will show as IDs
+    console.log('Skipping spend programs fetch (requires limits:read scope)');
     
     return this.spendProgramCache;
   }
