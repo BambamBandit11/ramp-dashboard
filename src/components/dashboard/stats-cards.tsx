@@ -42,10 +42,10 @@ export function StatsCards({ stats, loading }: StatsCardsProps) {
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {[...Array(5)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
+          <Card key={i} className="animate-pulse bg-[#18171A] border-[#2F2D33]">
             <CardContent className="pt-6 text-center">
-              <div className="h-3 bg-gray-200 rounded w-24 mx-auto mb-3"></div>
-              <div className="h-10 bg-gray-200 rounded w-20 mx-auto"></div>
+              <div className="h-3 bg-[#2F2D33] rounded w-24 mx-auto mb-3"></div>
+              <div className="h-10 bg-[#2F2D33] rounded w-20 mx-auto"></div>
             </CardContent>
           </Card>
         ))}
@@ -56,12 +56,12 @@ export function StatsCards({ stats, loading }: StatsCardsProps) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
       {cards.map((card, index) => (
-        <Card key={index} className="border-gray-200">
+        <Card key={index} className="bg-[#18171A] border-[#2F2D33]">
           <CardContent className="pt-6 text-center">
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">
               {card.title}
             </p>
-            <p className={`text-3xl font-bold ${card.isAmount ? 'text-teal-500' : 'text-teal-500'}`}>
+            <p className={`text-3xl font-bold ${card.isAmount ? 'text-[#BC7CFF]' : 'text-[#BC7CFF]'}`}>
               {card.value}
             </p>
           </CardContent>

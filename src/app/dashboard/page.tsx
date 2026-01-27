@@ -27,10 +27,10 @@ export default function DashboardPage() {
   // Show loading state during SSR/hydration
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#090B0B] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading dashboard...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7511E2] mx-auto"></div>
+          <p className="mt-2 text-gray-400">Loading dashboard...</p>
         </div>
       </div>
     );
@@ -39,13 +39,13 @@ export default function DashboardPage() {
   // Show error state
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#090B0B] flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Something went wrong</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <h2 className="text-2xl font-bold text-white mb-2">Something went wrong</h2>
+          <p className="text-gray-400 mb-4">{error}</p>
           <button
             onClick={refreshData}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+            className="bg-[#7511E2] text-white px-4 py-2 rounded-md hover:bg-[#9900B1] transition-colors"
           >
             Try Again
           </button>
@@ -55,14 +55,17 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#090B0B]">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Ramp Dashboard</h1>
-              <p className="text-gray-600 mt-1">Manage and analyze your company expenses</p>
+      <div className="bg-[#18171A] shadow-sm border-b border-[#2F2D33]">
+        <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center gap-4">
+              <img src="/coder-logo.svg" alt="Coder" className="h-8 invert" />
+              <div className="border-l border-[#2F2D33] pl-4">
+                <h1 className="text-xl font-semibold text-white">Expense Dashboard</h1>
+                <p className="text-gray-400 text-sm">Powered by Ramp</p>
+              </div>
             </div>
             <div className="flex items-center space-x-4">
               <div className="text-sm text-gray-500">
@@ -74,8 +77,8 @@ export default function DashboardPage() {
       </div>
 
       {/* Main Content - Full width */}
-      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="space-y-8">
+      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="space-y-6">
           {/* Stats Cards */}
           <StatsCards stats={stats} loading={loading} />
 

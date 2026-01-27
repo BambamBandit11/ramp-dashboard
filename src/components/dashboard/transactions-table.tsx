@@ -90,23 +90,15 @@ const PolicyCellRenderer = ({ data }: { data: RampTransaction }) => {
   );
 };
 
-// Receipt cell renderer
+// Receipt cell renderer - shows indicator only (Ramp receipt URLs require authentication)
 const ReceiptCellRenderer = ({ data }: { data: RampTransaction }) => {
   const hasReceipt = data.receipt_url || (data.receipts && data.receipts.length > 0);
-  const receiptUrl = data.receipt_url || (data.receipts && data.receipts[0]);
+  const receiptCount = data.receipts?.length || (data.receipt_url ? 1 : 0);
   
   return (
-    <div className="flex items-center justify-center">
+    <div className="flex items-center justify-center" title={hasReceipt ? `${receiptCount} receipt(s) attached` : 'No receipt'}>
       {hasReceipt ? (
-        <a 
-          href={receiptUrl} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="flex items-center text-green-500 hover:text-green-700"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <CheckCircle className="h-5 w-5" />
-        </a>
+        <CheckCircle className="h-5 w-5 text-green-500" />
       ) : (
         <XCircle className="h-5 w-5 text-red-500" />
       )}

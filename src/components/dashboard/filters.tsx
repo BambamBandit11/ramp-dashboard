@@ -73,33 +73,33 @@ function MultiSelect({ label, options, selected, onChange, placeholder = 'Select
 
   return (
     <div className="relative" ref={ref}>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <label className="block text-sm font-medium text-gray-300 mb-1">{label}</label>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-3 py-2 text-left bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+        className="w-full flex items-center justify-between px-3 py-2 text-left bg-[#18171A] border border-[#2F2D33] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#7511E2] focus:border-[#7511E2] text-sm"
       >
-        <span className={selected.length === 0 ? 'text-gray-400' : 'text-gray-900'}>
+        <span className={selected.length === 0 ? 'text-gray-500' : 'text-white'}>
           {displayText}
         </span>
         <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       
       {isOpen && (
-        <div className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-          <div className="sticky top-0 bg-gray-50 border-b px-3 py-2 flex gap-2">
+        <div className="absolute z-50 mt-1 w-full bg-[#18171A] border border-[#2F2D33] rounded-md shadow-lg max-h-60 overflow-auto">
+          <div className="sticky top-0 bg-[#2F2D33] border-b border-[#4A408F] px-3 py-2 flex gap-2">
             <button
               type="button"
               onClick={selectAll}
-              className="text-xs text-blue-600 hover:text-blue-800"
+              className="text-xs text-[#BC7CFF] hover:text-[#F08DFF]"
             >
               Select All
             </button>
-            <span className="text-gray-300">|</span>
+            <span className="text-gray-500">|</span>
             <button
               type="button"
               onClick={clearAll}
-              className="text-xs text-gray-600 hover:text-gray-800"
+              className="text-xs text-gray-400 hover:text-white"
             >
               Clear All
             </button>
@@ -107,15 +107,15 @@ function MultiSelect({ label, options, selected, onChange, placeholder = 'Select
           {options.map(option => (
             <label
               key={option}
-              className="flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"
+              className="flex items-center px-3 py-2 hover:bg-[#2F2D33] cursor-pointer"
             >
               <input
                 type="checkbox"
                 checked={selected.includes(option)}
                 onChange={() => toggleOption(option)}
-                className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                className="h-4 w-4 text-[#7511E2] bg-[#18171A] border-[#2F2D33] rounded focus:ring-[#7511E2]"
               />
-              <span className="ml-2 text-sm text-gray-700">{option || '(Empty)'}</span>
+              <span className="ml-2 text-sm text-gray-300">{option || '(Empty)'}</span>
             </label>
           ))}
           {options.length === 0 && (
