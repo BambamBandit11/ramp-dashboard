@@ -19,6 +19,7 @@ class RampServerClient {
   private accessToken: string | null = null;
   private tokenExpiry: number = 0;
   private useMockData: boolean;
+  private spendProgramCache: Map<string, string> = new Map(); // ID -> Name cache
 
   constructor() {
     this.clientId = process.env.RAMP_CLIENT_ID || '';
@@ -125,6 +126,9 @@ class RampServerClient {
 
     console.log('Fetching real transactions from Ramp API...');
     
+    // Fetch spend programs first so we can map IDs to names
+    await this.getSpendPrograms();
+    
     // Build base params for filtering
     const buildParams = (startingAfter?: string) => {
       const params = new URLSearchParams({
@@ -216,6 +220,30 @@ class RampServerClient {
     };
   }
 
+  async getSpendPrograms(): Promise<Map<string, string>> {
+    if (this.useMockData || this.spendProgramCache.size > 0) {
+      return this.spendProgramCache;
+    }
+
+    try {
+      console.log('Fetching spend programs (limits) from Ramp API...');
+      const response = await this.request<any>('/developer/v1/limits');
+      
+      if (response.data) {
+        for (const limit of response.data) {
+          if (limit.id && limit.display_name) {
+            this.spendProgramCache.set(limit.id, limit.display_name);
+          }
+        }
+      }
+      console.log(`Cached ${this.spendProgramCache.size} spend programs`);
+    } catch (error) {
+      console.error('Failed to fetch spend programs:', error);
+    }
+    
+    return this.spendProgramCache;
+  }
+
   async getUsers(): Promise<ApiResponse<RampUser>> {
     if (this.useMockData) {
       console.log('Using mock data for users (no valid credentials)');
@@ -300,7 +328,7 @@ class RampServerClient {
       memo: rampTx.memo || '',
       department: department,
       location: location,
-      spend_program_name: rampTx.limit_id ? `Program ${rampTx.limit_id.substring(0, 8)}` : undefined,
+      spend_program_name: rampTx.limit_id ? (this.spendProgramCache.get(rampTx.limit_id) || `Program ${rampTx.limit_id.substring(0, 8)}`) : undefined,
       spend_program_id: rampTx.limit_id,
       policy_violations: rampTx.policy_violations || [],
       is_compliant: !rampTx.policy_violations || rampTx.policy_violations.length === 0,

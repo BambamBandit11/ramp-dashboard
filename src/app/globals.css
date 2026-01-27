@@ -30,7 +30,7 @@ body {
   --ag-foreground-color: #e5e5e5;
   --ag-background-color: #18171A;
   --ag-header-background-color: #2F2D33;
-  --ag-header-foreground-color: #ffffff;
+  --ag-header-foreground-color: #18171A;
   --ag-odd-row-background-color: #1a1a1c;
   --ag-row-hover-color: #2F2D33;
   --ag-border-color: #2F2D33;
@@ -42,8 +42,16 @@ body {
 }
 
 .ag-theme-quartz-dark .ag-header-cell-text {
-  color: #ffffff;
+  color: #18171A !important;
   font-weight: 600;
+}
+
+.ag-theme-quartz-dark .ag-header-cell {
+  color: #18171A;
+}
+
+.ag-theme-quartz-dark .ag-icon {
+  color: #18171A;
 }
 
 .ag-theme-quartz-dark .ag-paging-panel {
