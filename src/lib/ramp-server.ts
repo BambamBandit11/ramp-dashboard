@@ -67,7 +67,7 @@ class RampServerClient {
       },
       body: new URLSearchParams({
         'grant_type': 'client_credentials',
-        'scope': 'transactions:read users:read cards:read business:read'
+        'scope': 'transactions:read users:read cards:read business:read spend_programs:read'
       })
     });
 
