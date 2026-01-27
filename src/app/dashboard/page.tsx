@@ -61,7 +61,7 @@ export default function DashboardPage() {
         <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center gap-4">
-              <img src="/coder-logo.svg" alt="Coder" className="h-12 invert" />
+              <img src="/coder-logo.svg" alt="Coder" className="h-8 invert" />
               <div className="border-l border-[#2F2D33] pl-4">
                 <h1 className="text-xl font-semibold text-white">Expense Dashboard</h1>
                 <p className="text-gray-400 text-sm">Powered by Ramp</p>

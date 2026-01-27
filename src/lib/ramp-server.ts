@@ -358,14 +358,8 @@ class RampServerClient {
       memo: rampTx.memo || '',
       department: department,
       location: location,
-      spend_program_name: (() => {
-        const spId = rampTx.spend_program_id || rampTx.limit_id;
-        if (!spId) return undefined;
-        const name = this.spendProgramCache.get(spId);
-        console.log(`Mapping spend program: ${spId} -> ${name || 'NOT FOUND'}`);
-        return name || `Program ${spId.substring(0, 8)}`;
-      })(),
-      spend_program_id: rampTx.spend_program_id || rampTx.limit_id,
+      spend_program_name: rampTx.limit_id ? (this.spendProgramCache.get(rampTx.limit_id) || `Program ${rampTx.limit_id.substring(0, 8)}`) : undefined,
+      spend_program_id: rampTx.limit_id,
       policy_violations: rampTx.policy_violations || [],
       is_compliant: !rampTx.policy_violations || rampTx.policy_violations.length === 0,
       pending_approver: undefined, // Will need separate API call to get approvers
