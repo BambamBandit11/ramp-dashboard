@@ -141,8 +141,9 @@ class RampServerClient {
       if (filters) {
         if (filters.employee) params.append('user_id', filters.employee);
         if (filters.category) params.append('category_id', filters.category);
-        if (filters.dateFrom) params.append('from_date', filters.dateFrom);
-        if (filters.dateTo) params.append('to_date', filters.dateTo);
+        // Ramp API requires ISO 8601 datetime format (YYYY-MM-DDTHH:MM:SSZ)
+        if (filters.dateFrom) params.append('from_date', `${filters.dateFrom}T00:00:00Z`);
+        if (filters.dateTo) params.append('to_date', `${filters.dateTo}T23:59:59Z`);
         if (filters.status) {
           const statusMap: Record<string, string> = {
             'pending': 'PENDING',
