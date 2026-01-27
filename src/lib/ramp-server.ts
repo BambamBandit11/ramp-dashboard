@@ -168,14 +168,34 @@ class RampServerClient {
     // Fetch ALL pages if pageSize > 100 (indicates "fetch all")
     const fetchAll = pageSize > 100;
     const allTransactions: RampTransaction[] = [];
-    let cursor: string | undefined = undefined;
+    let nextUrl: string | null = null;
     let hasMore = true;
     let pageCount = 0;
     const maxPages = 50; // Safety limit: 50 pages * 100 = 5000 transactions max
 
     while (hasMore && pageCount < maxPages) {
-      const params = buildParams(cursor);
-      const response = await this.request<any>(`/developer/v1/transactions?${params}`);
+      let response: any;
+      
+      if (nextUrl) {
+        // Use the full next URL for pagination
+        const accessToken = await this.getAccessToken();
+        console.log(`Fetching next page from: ${nextUrl}`);
+        const fetchResponse = await fetch(nextUrl, {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Accept': 'application/json',
+          },
+        });
+        if (!fetchResponse.ok) {
+          console.error('Pagination request failed:', fetchResponse.status);
+          break;
+        }
+        response = await fetchResponse.json();
+      } else {
+        // First request with filters
+        const params = buildParams();
+        response = await this.request<any>(`/developer/v1/transactions?${params}`);
+      }
       
       const transformed = response.data?.map((tx: any) => this.transformTransaction(tx)) || [];
       allTransactions.push(...transformed);
@@ -183,9 +203,9 @@ class RampServerClient {
       pageCount++;
       console.log(`Fetched page ${pageCount}: ${transformed.length} transactions (total: ${allTransactions.length})`);
       
-      // Check if there are more pages
-      hasMore = fetchAll && response.page?.next !== undefined && response.page?.next !== null;
-      cursor = response.page?.next;
+      // Check if there are more pages - Ramp returns page.next as a full URL
+      nextUrl = response.page?.next || null;
+      hasMore = fetchAll && nextUrl !== null;
       
       // If not fetching all, just return first page
       if (!fetchAll) break;
@@ -226,17 +246,43 @@ class RampServerClient {
     }
 
     try {
-      console.log('Fetching spend programs (limits) from Ramp API...');
-      const response = await this.request<any>('/developer/v1/limits');
+      console.log('Fetching spend programs from Ramp API...');
       
-      if (response.data) {
-        for (const limit of response.data) {
-          if (limit.id && limit.display_name) {
-            this.spendProgramCache.set(limit.id, limit.display_name);
+      // Try spend-programs endpoint first
+      try {
+        const spResponse = await this.request<any>('/developer/v1/spend-programs');
+        console.log('Spend programs response:', JSON.stringify(spResponse, null, 2).substring(0, 500));
+        if (spResponse.data) {
+          for (const sp of spResponse.data) {
+            if (sp.id && sp.display_name) {
+              this.spendProgramCache.set(sp.id, sp.display_name);
+            } else if (sp.id && sp.name) {
+              this.spendProgramCache.set(sp.id, sp.name);
+            }
           }
         }
+      } catch (spError) {
+        console.log('Spend programs endpoint failed, trying limits...', spError);
       }
-      console.log(`Cached ${this.spendProgramCache.size} spend programs`);
+      
+      // Also try limits endpoint (virtual cards/limits can have display names)
+      try {
+        const limitsResponse = await this.request<any>('/developer/v1/limits');
+        console.log('Limits response sample:', JSON.stringify(limitsResponse.data?.[0], null, 2));
+        if (limitsResponse.data) {
+          for (const limit of limitsResponse.data) {
+            // Try various field names Ramp might use
+            const name = limit.display_name || limit.name || limit.limit_name;
+            if (limit.id && name && !this.spendProgramCache.has(limit.id)) {
+              this.spendProgramCache.set(limit.id, name);
+            }
+          }
+        }
+      } catch (limitsError) {
+        console.log('Limits endpoint failed:', limitsError);
+      }
+      
+      console.log(`Cached ${this.spendProgramCache.size} spend programs/limits`);
     } catch (error) {
       console.error('Failed to fetch spend programs:', error);
     }
