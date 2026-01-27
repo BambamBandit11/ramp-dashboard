@@ -12,9 +12,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, CheckCircle, XCircle, FileText, ExternalLink } from 'lucide-react';
 
-// Import AG Grid styles
+// Import AG Grid styles - using Quartz dark theme
 import 'ag-grid-community/styles/ag-grid.css';
-import 'ag-grid-community/styles/ag-theme-alpine.css';
+import 'ag-grid-community/styles/ag-theme-quartz.css';
 
 interface TransactionsTableProps {
   transactions: RampTransaction[];
@@ -90,15 +90,25 @@ const PolicyCellRenderer = ({ data }: { data: RampTransaction }) => {
   );
 };
 
-// Receipt cell renderer - shows indicator only (Ramp receipt URLs require authentication)
+// Receipt cell renderer - links to Ramp transaction detail page
 const ReceiptCellRenderer = ({ data }: { data: RampTransaction }) => {
   const hasReceipt = data.receipt_url || (data.receipts && data.receipts.length > 0);
   const receiptCount = data.receipts?.length || (data.receipt_url ? 1 : 0);
+  // Link to Ramp transaction detail page where users can view receipts
+  const transactionUrl = `https://app.ramp.com/expenses/transactions/${data.id}`;
   
   return (
-    <div className="flex items-center justify-center" title={hasReceipt ? `${receiptCount} receipt(s) attached` : 'No receipt'}>
+    <div className="flex items-center justify-center" title={hasReceipt ? `${receiptCount} receipt(s) - Click to view in Ramp` : 'No receipt'}>
       {hasReceipt ? (
-        <CheckCircle className="h-5 w-5 text-green-500" />
+        <a 
+          href={transactionUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-green-500 hover:text-green-400"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <CheckCircle className="h-5 w-5" />
+        </a>
       ) : (
         <XCircle className="h-5 w-5 text-red-500" />
       )}
@@ -210,11 +220,11 @@ export function TransactionsTable({ transactions, loading, onRefresh }: Transact
   }, []);
 
   const getRowStyle = useCallback((params: { node: { rowIndex?: number } }) => {
-    // Alternate row colors
+    // Alternate row colors for dark theme
     if (params.node.rowIndex && params.node.rowIndex % 2 === 0) {
-      return { backgroundColor: '#fafafa' };
+      return { backgroundColor: '#1a1a1c' };
     }
-    return null;
+    return { backgroundColor: '#18171A' };
   }, []);
 
   return (
@@ -234,7 +244,7 @@ export function TransactionsTable({ transactions, loading, onRefresh }: Transact
         </div>
       </CardHeader>
       <CardContent>
-        <div className="ag-theme-alpine" style={{ height: '600px', width: '100%' }}>
+        <div className="ag-theme-quartz-dark" style={{ height: '600px', width: '100%' }}>
           <AgGridReact
             rowData={transactions}
             columnDefs={columnDefs}
@@ -250,16 +260,16 @@ export function TransactionsTable({ transactions, loading, onRefresh }: Transact
             loadingOverlayComponent={() => (
               <div className="flex items-center justify-center h-full">
                 <div className="flex items-center space-x-2">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                  <span>Loading transactions...</span>
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#7511E2]"></div>
+                  <span className="text-gray-300">Loading transactions...</span>
                 </div>
               </div>
             )}
             noRowsOverlayComponent={() => (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">
-                  <p className="text-gray-500 mb-2">No transactions found</p>
-                  <p className="text-sm text-gray-400">Try adjusting your filters</p>
+                  <p className="text-gray-400 mb-2">No transactions found</p>
+                  <p className="text-sm text-gray-500">Try adjusting your filters</p>
                 </div>
               </div>
             )}
