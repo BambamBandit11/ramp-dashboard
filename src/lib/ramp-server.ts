@@ -250,9 +250,21 @@ class RampServerClient {
       return this.spendProgramCache;
     }
 
-    // Note: Requires limits:read scope which may not be enabled
-    // For now, skip this to avoid errors - spend programs will show as IDs
-    console.log('Skipping spend programs fetch (requires limits:read scope)');
+    try {
+      console.log('Fetching spend programs from Ramp API...');
+      const response = await this.request<any>('/developer/v1/spend-programs');
+      
+      if (response.data) {
+        for (const program of response.data) {
+          if (program.id && program.display_name) {
+            this.spendProgramCache.set(program.id, program.display_name);
+          }
+        }
+        console.log(`Cached ${this.spendProgramCache.size} spend programs`);
+      }
+    } catch (error) {
+      console.error('Failed to fetch spend programs:', error);
+    }
     
     return this.spendProgramCache;
   }
