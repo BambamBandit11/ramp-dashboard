@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     
     const page = parseInt(searchParams.get('page') || '1');
-    const pageSize = Math.min(100, Math.max(2, parseInt(searchParams.get('page_size') || '50')));
+    const pageSize = parseInt(searchParams.get('page_size') || '50');
     
     const filters: FilterOptions = {
       employee: searchParams.get('employee') || undefined,
