@@ -254,10 +254,15 @@ class RampServerClient {
       console.log('Fetching spend programs from Ramp API...');
       const response = await this.request<any>('/developer/v1/spend-programs');
       
+      console.log('Spend programs response:', JSON.stringify(response, null, 2));
+      
       if (response.data) {
         for (const program of response.data) {
-          if (program.id && program.display_name) {
-            this.spendProgramCache.set(program.id, program.display_name);
+          // Log each program to see field names
+          console.log('Program:', program.id, program.display_name, program.name);
+          const name = program.display_name || program.name;
+          if (program.id && name) {
+            this.spendProgramCache.set(program.id, name);
           }
         }
         console.log(`Cached ${this.spendProgramCache.size} spend programs`);
