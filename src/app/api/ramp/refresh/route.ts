@@ -3,23 +3,21 @@ import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-// Endpoints to refresh - includes transactions and all mapping/lookup data
+// Endpoints to refresh - all mapping/lookup data
 const REFRESH_ENDPOINTS = [
   '/api/ramp/transactions',
   '/api/ramp/users',
   '/api/ramp/cards',
 ];
 
-export async function GET(request: Request) {
-  // Verify the request is from Vercel Cron (optional but recommended)
-  const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}` && process.env.CRON_SECRET) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+/**
+ * Manual refresh endpoint for Accounting to trigger cache updates
+ * POST /api/ramp/refresh
+ */
+export async function POST(request: Request) {
   const baseUrl = process.env.VERCEL_URL 
     ? `https://${process.env.VERCEL_URL}` 
-    : 'http://localhost:3000';
+    : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
   const results: Record<string, { success: boolean; error?: string }> = {};
 
@@ -47,18 +45,18 @@ export async function GET(request: Request) {
     const allSuccessful = Object.values(results).every(r => r.success);
     const failedCount = Object.values(results).filter(r => !r.success).length;
 
-    console.log(`[Cron] Daily refresh completed at ${new Date().toISOString()}`, results);
+    console.log(`[Manual Refresh] Completed at ${new Date().toISOString()}`, results);
     
     return NextResponse.json({ 
       success: allSuccessful, 
       refreshedAt: new Date().toISOString(),
       message: allSuccessful 
-        ? 'Daily data refresh completed' 
+        ? 'All data refreshed successfully' 
         : `Refresh completed with ${failedCount} failures`,
       results
     }, { status: allSuccessful ? 200 : 207 });
   } catch (error) {
-    console.error('[Cron] Refresh failed:', error);
+    console.error('[Manual Refresh] Failed:', error);
     return NextResponse.json({ 
       error: 'Refresh failed', 
       details: error instanceof Error ? error.message : 'Unknown error'

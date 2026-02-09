@@ -19,6 +19,7 @@ class RampApiClient {
           'Content-Type': 'application/json',
           ...options?.headers,
         },
+        cache: 'no-store',
         ...options,
       });
 
