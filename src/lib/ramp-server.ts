@@ -346,6 +346,7 @@ class RampServerClient {
     
     return {
       id: rampTx.id || rampTx.transaction_id,
+      user_id: user.id || rampTx.user_id,
       amount: amount,
       currency: rampTx.currency_code || rampTx.currency || 'USD',
       description: rampTx.merchant_descriptor || rampTx.merchant_name || rampTx.memo || '',

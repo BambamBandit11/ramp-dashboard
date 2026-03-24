@@ -1,5 +1,6 @@
 export interface RampTransaction {
   id: string;
+  user_id?: string;
   amount: number;
   currency: string;
   description: string;
@@ -47,6 +48,7 @@ export interface RampUser {
 
 export interface FilterOptions {
   employee?: string;
+  employees?: string[]; // Multi-select employee IDs
   category?: string;
   categories?: string[];
   merchants?: string[];

@@ -102,6 +102,13 @@ export function useDashboardData() {
   // Apply client-side filters for multi-select options
   const applyClientFilters = useCallback((transactions: RampTransaction[], currentFilters: FilterOptions): RampTransaction[] => {
     return transactions.filter(tx => {
+      // Multi-select employee filter (by user_id)
+      if (currentFilters.employees && currentFilters.employees.length > 0) {
+        if (!tx.user_id || !currentFilters.employees.includes(tx.user_id)) {
+          return false;
+        }
+      }
+      
       // Multi-select department filter
       if (currentFilters.departments && currentFilters.departments.length > 0) {
         if (!tx.department || !currentFilters.departments.includes(tx.department)) {
@@ -185,7 +192,9 @@ export function useDashboardData() {
       setFilters(newFilters);
       
       // For multi-select filters, apply client-side filtering immediately
-      const hasOnlyClientFilters = !newFilters.employee && !newFilters.status && 
+      // Server-side filters: status, dateFrom, dateTo, minAmount, maxAmount
+      // Client-side filters: employees, departments, categories, merchants, spendPrograms, policyCompliance
+      const hasOnlyClientFilters = !newFilters.status && 
         !newFilters.dateFrom && !newFilters.dateTo && 
         !newFilters.minAmount && !newFilters.maxAmount;
       
