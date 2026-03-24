@@ -137,11 +137,26 @@ export function useDashboardData() {
         }
       }
       
-      // Policy compliance filter
+      // Multi-select status filter
+      if (currentFilters.statuses && currentFilters.statuses.length > 0) {
+        if (!tx.status || !currentFilters.statuses.includes(tx.status)) {
+          return false;
+        }
+      }
+      
+      // Policy compliance filter (single or multi)
       if (currentFilters.policyCompliance) {
         const isCompliant = tx.is_compliant !== false && (!tx.policy_violations || tx.policy_violations.length === 0);
         if (currentFilters.policyCompliance === 'compliant' && !isCompliant) return false;
         if (currentFilters.policyCompliance === 'non-compliant' && isCompliant) return false;
+      }
+      
+      // Multi-select policy compliance filter
+      if (currentFilters.policyCompliances && currentFilters.policyCompliances.length > 0) {
+        const isCompliant = tx.is_compliant !== false && (!tx.policy_violations || tx.policy_violations.length === 0);
+        const matchesCompliant = currentFilters.policyCompliances.includes('compliant') && isCompliant;
+        const matchesNonCompliant = currentFilters.policyCompliances.includes('non-compliant') && !isCompliant;
+        if (!matchesCompliant && !matchesNonCompliant) return false;
       }
       
       return true;

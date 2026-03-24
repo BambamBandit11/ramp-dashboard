@@ -48,19 +48,21 @@ export interface RampUser {
 
 export interface FilterOptions {
   employee?: string;
-  employees?: string[]; // Multi-select employee IDs
+  employees?: string[]; // Multi-select employee names
   category?: string;
   categories?: string[];
   merchants?: string[];
   dateFrom?: string;
   dateTo?: string;
   status?: string;
+  statuses?: string[]; // Multi-select statuses
   minAmount?: number;
   maxAmount?: number;
   department?: string;
   departments?: string[];
   spendPrograms?: string[];
   policyCompliance?: 'compliant' | 'non-compliant' | '';
+  policyCompliances?: string[]; // Multi-select policy compliance
 }
 
 export interface DashboardStats {
