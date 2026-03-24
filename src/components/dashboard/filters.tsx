@@ -5,9 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FilterOptions, RampTransaction, RampUser } from '@/types/ramp';
-import { Filter, X, Download, ChevronDown, Check, Search } from 'lucide-react';
-import { rampApi } from '@/lib/ramp-api';
+import { FilterOptions, RampTransaction } from '@/types/ramp';
+import { Filter, X, Download, ChevronDown, Search } from 'lucide-react';
 
 interface FiltersProps {
   filters: FilterOptions;
@@ -129,13 +128,12 @@ function MultiSelect({ label, options, selected, onChange, placeholder = 'Select
 
 // Employee multi-select with search and Apply button
 interface EmployeeMultiSelectProps {
-  employees: RampUser[];
+  options: string[];  // Employee names from transactions
   selected: string[];
   onApply: (selected: string[]) => void;
-  loading?: boolean;
 }
 
-function EmployeeMultiSelect({ employees, selected, onApply, loading }: EmployeeMultiSelectProps) {
+function EmployeeMultiSelect({ options, selected, onApply }: EmployeeMultiSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [pendingSelected, setPendingSelected] = useState<string[]>(selected);
@@ -158,26 +156,22 @@ function EmployeeMultiSelect({ employees, selected, onApply, loading }: Employee
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [selected]);
 
-  const filteredEmployees = useMemo(() => {
-    if (!searchQuery.trim()) return employees;
+  const filteredOptions = useMemo(() => {
+    if (!searchQuery.trim()) return options;
     const query = searchQuery.toLowerCase();
-    return employees.filter(emp => 
-      `${emp.first_name} ${emp.last_name}`.toLowerCase().includes(query) ||
-      emp.email.toLowerCase().includes(query)
-    );
-  }, [employees, searchQuery]);
+    return options.filter(name => name.toLowerCase().includes(query));
+  }, [options, searchQuery]);
 
-  const toggleEmployee = (id: string) => {
-    if (pendingSelected.includes(id)) {
-      setPendingSelected(pendingSelected.filter(s => s !== id));
+  const toggleOption = (name: string) => {
+    if (pendingSelected.includes(name)) {
+      setPendingSelected(pendingSelected.filter(s => s !== name));
     } else {
-      setPendingSelected([...pendingSelected, id]);
+      setPendingSelected([...pendingSelected, name]);
     }
   };
 
   const selectAllVisible = () => {
-    const visibleIds = filteredEmployees.map(e => e.id);
-    const newSelected = [...new Set([...pendingSelected, ...visibleIds])];
+    const newSelected = [...new Set([...pendingSelected, ...filteredOptions])];
     setPendingSelected(newSelected);
   };
 
@@ -196,10 +190,7 @@ function EmployeeMultiSelect({ employees, selected, onApply, loading }: Employee
 
   const getDisplayText = () => {
     if (selected.length === 0) return 'All Employees';
-    if (selected.length === 1) {
-      const emp = employees.find(e => e.id === selected[0]);
-      return emp ? `${emp.first_name} ${emp.last_name}` : '1 selected';
-    }
+    if (selected.length === 1) return selected[0];
     return `${selected.length} selected`;
   };
 
@@ -209,11 +200,10 @@ function EmployeeMultiSelect({ employees, selected, onApply, loading }: Employee
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        disabled={loading}
-        className="w-full flex items-center justify-between px-3 py-2 text-left bg-[#18171A] border border-[#2F2D33] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#7511E2] focus:border-[#7511E2] text-sm disabled:opacity-50"
+        className="w-full flex items-center justify-between px-3 py-2 text-left bg-[#18171A] border border-[#2F2D33] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#7511E2] focus:border-[#7511E2] text-sm"
       >
         <span className={selected.length === 0 ? 'text-gray-500' : 'text-white'}>
-          {loading ? 'Loading...' : getDisplayText()}
+          {getDisplayText()}
         </span>
         <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
@@ -256,23 +246,21 @@ function EmployeeMultiSelect({ employees, selected, onApply, loading }: Employee
           
           {/* Options list */}
           <div className="max-h-48 overflow-auto">
-            {filteredEmployees.map(emp => (
+            {filteredOptions.map(name => (
               <label
-                key={emp.id}
+                key={name}
                 className="flex items-center px-3 py-2 hover:bg-[#2F2D33] cursor-pointer"
               >
                 <input
                   type="checkbox"
-                  checked={pendingSelected.includes(emp.id)}
-                  onChange={() => toggleEmployee(emp.id)}
+                  checked={pendingSelected.includes(name)}
+                  onChange={() => toggleOption(name)}
                   className="h-4 w-4 text-[#7511E2] bg-[#18171A] border-[#2F2D33] rounded focus:ring-[#7511E2]"
                 />
-                <span className="ml-2 text-sm text-gray-300">
-                  {emp.first_name} {emp.last_name}
-                </span>
+                <span className="ml-2 text-sm text-gray-300">{name}</span>
               </label>
             ))}
-            {filteredEmployees.length === 0 && (
+            {filteredOptions.length === 0 && (
               <div className="px-3 py-2 text-sm text-gray-500">
                 {searchQuery ? 'No matches found' : 'No employees available'}
               </div>
@@ -305,32 +293,16 @@ function EmployeeMultiSelect({ employees, selected, onApply, loading }: Employee
 
 export function Filters({ filters, onFiltersChange, onExport, loading, transactions = [] }: FiltersProps) {
   const [isExpanded, setIsExpanded] = useState(true); // Start expanded
-  const [employeeList, setEmployeeList] = useState<RampUser[]>([]);
-  const [loadingEmployees, setLoadingEmployees] = useState(false);
 
   // Extract unique values from transactions for multi-select filters
+  const uniqueEmployees = useMemo(() => {
+    const names = [...new Set(transactions.map(t => t.employee_name).filter(Boolean))] as string[];
+    return names.sort((a, b) => a.localeCompare(b));
+  }, [transactions]);
   const uniqueDepartments = [...new Set(transactions.map(t => t.department).filter(Boolean))] as string[];
   const uniqueCategories = [...new Set(transactions.map(t => t.category_name).filter(Boolean))] as string[];
   const uniqueMerchants = [...new Set(transactions.map(t => t.merchant_name).filter(Boolean))] as string[];
-  // Filter out placeholder IDs (e.g., "Program 16aceb7") - only show actual names
-  const uniqueSpendPrograms = [...new Set(transactions.map(t => t.spend_program_name).filter(name => name && !name.startsWith('Program ')))] as string[];
-
-  useEffect(() => {
-    const loadEmployees = async () => {
-      setLoadingEmployees(true);
-      try {
-        const response = await rampApi.getUsers();
-        setEmployeeList(response.data);
-      } catch (error) {
-        console.error('Failed to load employees:', error);
-        setEmployeeList([]);
-      } finally {
-        setLoadingEmployees(false);
-      }
-    };
-
-    loadEmployees();
-  }, []);
+  const uniqueSpendPrograms = [...new Set(transactions.map(t => t.spend_program_name).filter(Boolean))] as string[];
 
   const handleFilterChange = (key: keyof FilterOptions, value: string | number | string[] | undefined) => {
     onFiltersChange({
@@ -388,10 +360,9 @@ export function Filters({ filters, onFiltersChange, onExport, loading, transacti
         {/* Basic Filters - Always Visible */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <EmployeeMultiSelect
-            employees={employeeList}
+            options={uniqueEmployees}
             selected={filters.employees || []}
             onApply={(selected) => handleFilterChange('employees', selected)}
-            loading={loadingEmployees}
           />
           <Select
             label="Status"

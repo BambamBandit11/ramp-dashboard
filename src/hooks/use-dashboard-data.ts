@@ -102,9 +102,9 @@ export function useDashboardData() {
   // Apply client-side filters for multi-select options
   const applyClientFilters = useCallback((transactions: RampTransaction[], currentFilters: FilterOptions): RampTransaction[] => {
     return transactions.filter(tx => {
-      // Multi-select employee filter (by user_id)
+      // Multi-select employee filter (by employee_name)
       if (currentFilters.employees && currentFilters.employees.length > 0) {
-        if (!tx.user_id || !currentFilters.employees.includes(tx.user_id)) {
+        if (!tx.employee_name || !currentFilters.employees.includes(tx.employee_name)) {
           return false;
         }
       }
