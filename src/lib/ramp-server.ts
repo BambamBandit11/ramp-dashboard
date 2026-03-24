@@ -330,12 +330,41 @@ class RampServerClient {
     
     // Get category from sk_category_name or accounting_categories
     let categoryName = rampTx.sk_category_name || 'Uncategorized';
+    let budgetAccount: string | undefined;
+    let budgetDepartment: string | undefined;
+    
     if (rampTx.accounting_categories) {
       const glCategory = rampTx.accounting_categories.find(
         (c: any) => c.tracking_category_remote_type === 'GL_ACCOUNT'
       );
       if (glCategory?.category_name) {
         categoryName = glCategory.category_name;
+        budgetAccount = glCategory.category_name; // This is the NetSuite Category / GL Account
+      }
+      
+      // Get Budget Department from accounting_categories (NetSuite Department)
+      const accountingDept = rampTx.accounting_categories.find(
+        (c: any) => c.tracking_category_remote_type === 'DEPARTMENT' || 
+                   (c.tracking_category_remote_type === 'OTHER' && c.tracking_category_remote_name?.toLowerCase().includes('department'))
+      );
+      if (accountingDept?.category_name) {
+        budgetDepartment = accountingDept.category_name;
+      }
+    }
+    
+    // Also check accounting_field_selections for GL account and department
+    if (rampTx.accounting_field_selections) {
+      for (const field of rampTx.accounting_field_selections) {
+        if (field.external_code && field.name) {
+          // GL Account typically has numeric codes like "66010"
+          if (!budgetAccount && (field.type === 'GL_ACCOUNT' || field.external_code.match(/^\d+/))) {
+            budgetAccount = field.name;
+          }
+          // Department field
+          if (!budgetDepartment && field.type === 'DEPARTMENT') {
+            budgetDepartment = field.name;
+          }
+        }
       }
     }
     
@@ -366,6 +395,8 @@ class RampServerClient {
         ? (this.spendProgramCache.get(rampTx.spend_program_id) || `Program ${rampTx.spend_program_id.substring(0, 8)}`) 
         : undefined,
       spend_program_id: rampTx.spend_program_id,
+      budget_account: budgetAccount,
+      budget_department: budgetDepartment,
       policy_violations: rampTx.policy_violations || [],
       is_compliant: !rampTx.policy_violations || rampTx.policy_violations.length === 0,
       pending_approver: undefined, // Will need separate API call to get approvers

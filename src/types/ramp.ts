@@ -18,6 +18,8 @@ export interface RampTransaction {
   location?: string;
   spend_program_name?: string;
   spend_program_id?: string;
+  budget_account?: string;      // NetSuite GL Account (e.g., "66010 - Token Usage - Opex")
+  budget_department?: string;   // NetSuite Department (e.g., "IT") - where expense is charged
   policy_violations?: string[];
   is_compliant?: boolean;
   pending_approver?: string;
@@ -63,6 +65,8 @@ export interface FilterOptions {
   spendPrograms?: string[];
   policyCompliance?: 'compliant' | 'non-compliant' | '';
   policyCompliances?: string[]; // Multi-select policy compliance
+  budgetAccounts?: string[];    // Multi-select Budget Account (GL Account)
+  budgetDepartments?: string[]; // Multi-select Budget Department
 }
 
 export interface DashboardStats {

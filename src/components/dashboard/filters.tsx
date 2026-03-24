@@ -219,6 +219,12 @@ export function Filters({ filters, onFiltersChange, onExport, loading, transacti
   const uniqueSpendPrograms = useMemo(() => {
     return [...new Set(transactions.map(t => t.spend_program_name).filter(Boolean))] as string[];
   }, [transactions]);
+  const uniqueBudgetAccounts = useMemo(() => {
+    return [...new Set(transactions.map(t => t.budget_account).filter(Boolean))] as string[];
+  }, [transactions]);
+  const uniqueBudgetDepartments = useMemo(() => {
+    return [...new Set(transactions.map(t => t.budget_department).filter(Boolean))] as string[];
+  }, [transactions]);
 
   const handleFilterChange = (key: keyof FilterOptions, value: string | number | string[] | undefined) => {
     onFiltersChange({
@@ -368,6 +374,22 @@ export function Filters({ filters, onFiltersChange, onExport, loading, transacti
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4">
               <SearchableMultiSelect
+                label="Budget Account"
+                options={uniqueBudgetAccounts}
+                selected={filters.budgetAccounts || []}
+                onApply={(selected) => handleFilterChange('budgetAccounts', selected)}
+                placeholder="All Accounts"
+                searchPlaceholder="Search accounts..."
+              />
+              <SearchableMultiSelect
+                label="Budget Department"
+                options={uniqueBudgetDepartments}
+                selected={filters.budgetDepartments || []}
+                onApply={(selected) => handleFilterChange('budgetDepartments', selected)}
+                placeholder="All Departments"
+                searchPlaceholder="Search departments..."
+              />
+              <SearchableMultiSelect
                 label="Policy Compliance"
                 options={POLICY_OPTIONS}
                 selected={(filters.policyCompliances || []).map(p => policyValueToDisplay[p] || p)}
@@ -382,6 +404,8 @@ export function Filters({ filters, onFiltersChange, onExport, loading, transacti
                 value={filters.minAmount || ''}
                 onChange={(e) => handleFilterChange('minAmount', e.target.value ? parseFloat(e.target.value) : undefined)}
               />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4">
               <Input
                 label="Max Amount"
                 type="number"

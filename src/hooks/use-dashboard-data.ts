@@ -159,6 +159,20 @@ export function useDashboardData() {
         if (!matchesCompliant && !matchesNonCompliant) return false;
       }
       
+      // Multi-select budget account filter
+      if (currentFilters.budgetAccounts && currentFilters.budgetAccounts.length > 0) {
+        if (!tx.budget_account || !currentFilters.budgetAccounts.includes(tx.budget_account)) {
+          return false;
+        }
+      }
+      
+      // Multi-select budget department filter
+      if (currentFilters.budgetDepartments && currentFilters.budgetDepartments.length > 0) {
+        if (!tx.budget_department || !currentFilters.budgetDepartments.includes(tx.budget_department)) {
+          return false;
+        }
+      }
+      
       return true;
     });
   }, []);

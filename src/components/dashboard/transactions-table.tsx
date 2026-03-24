@@ -171,6 +171,20 @@ export function TransactionsTable({ transactions, loading, onRefresh }: Transact
       filter: 'agTextColumnFilter',
     },
     {
+      headerName: 'Budget Account',
+      field: 'budget_account',
+      minWidth: 200,
+      width: 200,
+      filter: 'agSetColumnFilter',
+    },
+    {
+      headerName: 'Budget Department',
+      field: 'budget_department',
+      minWidth: 140,
+      width: 140,
+      filter: 'agSetColumnFilter',
+    },
+    {
       headerName: 'Memo',
       field: 'memo',
       minWidth: 200,
