@@ -362,8 +362,10 @@ class RampServerClient {
       memo: rampTx.memo || '',
       department: department,
       location: location,
-      spend_program_name: rampTx.limit_id ? (this.spendProgramCache.get(rampTx.limit_id) || `Program ${rampTx.limit_id.substring(0, 8)}`) : undefined,
-      spend_program_id: rampTx.limit_id,
+      spend_program_name: rampTx.spend_program_id 
+        ? (this.spendProgramCache.get(rampTx.spend_program_id) || `Program ${rampTx.spend_program_id.substring(0, 8)}`) 
+        : undefined,
+      spend_program_id: rampTx.spend_program_id,
       policy_violations: rampTx.policy_violations || [],
       is_compliant: !rampTx.policy_violations || rampTx.policy_violations.length === 0,
       pending_approver: undefined, // Will need separate API call to get approvers
