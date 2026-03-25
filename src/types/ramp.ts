@@ -20,6 +20,9 @@ export interface RampTransaction {
   spend_program_id?: string;
   budget_account?: string;      // NetSuite GL Account (e.g., "66010 - Token Usage - Opex")
   budget_department?: string;   // NetSuite Department (e.g., "IT") - where expense is charged
+  amortization_template?: string; // NetSuite Amortization Template (e.g., "Prepaid Marketing")
+  amortization_start_date?: string; // Amortization start date
+  amortization_end_date?: string;   // Amortization end date
   policy_violations?: string[];
   is_compliant?: boolean;
   pending_approver?: string;
@@ -67,6 +70,7 @@ export interface FilterOptions {
   policyCompliances?: string[]; // Multi-select policy compliance
   budgetAccounts?: string[];    // Multi-select Budget Account (GL Account)
   budgetDepartments?: string[]; // Multi-select Budget Department
+  isAmortized?: boolean;        // Filter for amortized transactions
 }
 
 export interface DashboardStats {

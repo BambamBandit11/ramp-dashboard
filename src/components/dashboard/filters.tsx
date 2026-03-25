@@ -389,6 +389,17 @@ export function Filters({ filters, onFiltersChange, onExport, loading, transacti
                 placeholder="All Departments"
                 searchPlaceholder="Search departments..."
               />
+              <div className="flex flex-col justify-end">
+                <label className="flex items-center gap-2 cursor-pointer py-2">
+                  <input
+                    type="checkbox"
+                    checked={filters.isAmortized || false}
+                    onChange={(e) => handleFilterChange('isAmortized', e.target.checked || undefined)}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">Amortized?</span>
+                </label>
+              </div>
               <SearchableMultiSelect
                 label="Policy Compliance"
                 options={POLICY_OPTIONS}

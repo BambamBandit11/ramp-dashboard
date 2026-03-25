@@ -173,6 +173,13 @@ export function useDashboardData() {
         }
       }
       
+      // Amortized filter
+      if (currentFilters.isAmortized) {
+        if (!tx.amortization_template) {
+          return false;
+        }
+      }
+      
       return true;
     });
   }, []);

@@ -352,17 +352,48 @@ class RampServerClient {
       }
     }
     
-    // Also check accounting_field_selections for GL account and department
+    // Also check accounting_field_selections for GL account, department, and amortization
+    let amortizationTemplate: string | undefined;
+    let amortizationStartDate: string | undefined;
+    let amortizationEndDate: string | undefined;
+    
     if (rampTx.accounting_field_selections) {
       for (const field of rampTx.accounting_field_selections) {
-        if (field.external_code && field.name) {
-          // GL Account typically has numeric codes like "66010"
-          if (!budgetAccount && (field.type === 'GL_ACCOUNT' || field.external_code.match(/^\d+/))) {
-            budgetAccount = field.name;
-          }
-          // Department field
-          if (!budgetDepartment && field.type === 'DEPARTMENT') {
-            budgetDepartment = field.name;
+        const fieldType = field.category_info?.type || field.type;
+        const fieldName = field.name || field.category_info?.name;
+        
+        // GL Account
+        if (!budgetAccount && fieldType === 'GL_ACCOUNT' && fieldName) {
+          budgetAccount = fieldName;
+        }
+        // Department field
+        if (!budgetDepartment && fieldType === 'DEPARTMENT' && fieldName) {
+          budgetDepartment = fieldName;
+        }
+        // Amortization Template
+        if (fieldType === 'AMORTIZATION_TEMPLATE' && fieldName) {
+          amortizationTemplate = fieldName;
+        }
+      }
+    }
+    
+    // Check for amortization data in dedicated fields
+    if (rampTx.amortization) {
+      amortizationTemplate = amortizationTemplate || rampTx.amortization.template_name;
+      amortizationStartDate = rampTx.amortization.start_date;
+      amortizationEndDate = rampTx.amortization.end_date;
+    }
+    
+    // Also check line_items for amortization info
+    if (rampTx.line_items && rampTx.line_items.length > 0) {
+      for (const lineItem of rampTx.line_items) {
+        if (lineItem.accounting_field_selections) {
+          for (const field of lineItem.accounting_field_selections) {
+            const fieldType = field.category_info?.type || field.type;
+            const fieldName = field.name || field.category_info?.name;
+            if (fieldType === 'AMORTIZATION_TEMPLATE' && fieldName && !amortizationTemplate) {
+              amortizationTemplate = fieldName;
+            }
           }
         }
       }
@@ -397,6 +428,9 @@ class RampServerClient {
       spend_program_id: rampTx.spend_program_id,
       budget_account: budgetAccount,
       budget_department: budgetDepartment,
+      amortization_template: amortizationTemplate,
+      amortization_start_date: amortizationStartDate,
+      amortization_end_date: amortizationEndDate,
       policy_violations: rampTx.policy_violations || [],
       is_compliant: !rampTx.policy_violations || rampTx.policy_violations.length === 0,
       pending_approver: undefined, // Will need separate API call to get approvers

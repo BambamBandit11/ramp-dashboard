@@ -185,6 +185,13 @@ export function TransactionsTable({ transactions, loading, onRefresh }: Transact
       filter: 'agSetColumnFilter',
     },
     {
+      headerName: 'Amortization',
+      field: 'amortization_template',
+      minWidth: 160,
+      width: 160,
+      filter: 'agSetColumnFilter',
+    },
+    {
       headerName: 'Memo',
       field: 'memo',
       minWidth: 200,
