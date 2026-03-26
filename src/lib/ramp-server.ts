@@ -357,6 +357,16 @@ class RampServerClient {
     let amortizationStartDate: string | undefined;
     let amortizationEndDate: string | undefined;
     
+    // Debug: log raw amortization-related fields for transactions with "Freeman" or large amounts
+    if (rampTx.merchant_name?.includes('Freeman') || (rampTx.amount && rampTx.amount > 500000)) {
+      console.log('DEBUG amortization for', rampTx.merchant_name, JSON.stringify({
+        accounting_field_selections: rampTx.accounting_field_selections,
+        amortization: rampTx.amortization,
+        line_items_count: rampTx.line_items?.length,
+        line_items_afs: rampTx.line_items?.map((li: any) => li.accounting_field_selections),
+      }, null, 2));
+    }
+    
     if (rampTx.accounting_field_selections) {
       for (const field of rampTx.accounting_field_selections) {
         const fieldType = field.category_info?.type || field.type;
